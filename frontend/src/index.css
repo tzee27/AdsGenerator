@@ -9,6 +9,8 @@
   --color-surface: #ccdec1;
   --color-surface-mid: #abbd99;
   --color-surface-deep: #7d9169;
+  --color-cream: #e6ddcc;
+  --color-gray-light: #e8e8e8;
 
   /* Text */
   --color-text-primary: #1e2217;
@@ -65,6 +67,9 @@
   --color-accent: #abbd99;
   --color-accent-hover: #c4d8b2;
   --color-accent-light: #2e3826;
+
+  --color-cream: #3d3b34; /* Darker, muted cream */
+  --color-gray-light: #2a2a2a; /* Dark gray */
 }
 
 /* ============================================================

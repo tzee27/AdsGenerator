@@ -17,10 +17,10 @@ export default function AdCard({ platform, format, category, caption, date, onCl
       </div>
       <div className="ad-card__preview">
         <div className="ad-card__preview-shape" />
-        <p className="ad-card__category">{category}</p>
       </div>
       <div className="ad-card__caption">
-        <p>{caption}</p>
+        <p className="ad-card__category">{category}</p>
+        <p className="ad-card__text">{caption}</p>
       </div>
       {date && <div className="ad-card__date">{date}</div>}
     </div>

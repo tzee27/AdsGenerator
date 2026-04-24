@@ -160,7 +160,6 @@ export default function ContentGeneration() {
               )}
             </div>
 
-            {/* CSV format hint */}
             <div className="gen-csv-hint">
               <div className="gen-csv-hint__label">Expected columns:</div>
               <div className="gen-csv-hint__cols">
@@ -170,33 +169,37 @@ export default function ContentGeneration() {
               </div>
             </div>
 
-            {/* Preview list — redesigned for clarity */}
-            <div className="gen-preview">
+            <div className="gen-preview-wrap">
               <div className="gen-preview__header">
                 <span className="gen-preview__title">Inventory Preview</span>
-                <span className="gen-preview__count">{MOCK_INVENTORY.length} products</span>
+                <span className="gen-preview__count">{MOCK_INVENTORY.length} products found</span>
               </div>
-              <div className="gen-inventory-list">
-                {MOCK_INVENTORY.map((item, i) => (
-                  <div key={i} className="gen-inventory-item">
-                    <div className="gen-inventory-item__info">
-                      <span className="gen-inventory-item__name">{item.name}</span>
-                      <span className="gen-inventory-item__category">{item.category}</span>
-                    </div>
-                    <div className="gen-inventory-item__meta">
-                      <div className="gen-inventory-item__stock">
-                        <span className="gen-inventory-item__label">Stock</span>
-                        <span className={`gen-stock-badge ${item.stock < 15 ? 'gen-stock-badge--low' : ''}`}>
-                          {item.stock} units
-                        </span>
-                      </div>
-                      <div className="gen-inventory-item__price">
-                        <span className="gen-inventory-item__label">Price</span>
-                        <span className="gen-inventory-item__value">{item.price}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              
+              <div className="gen-table-scroll">
+                <table className="gen-inventory-table">
+                  <thead>
+                    <tr>
+                      <th>Product Name</th>
+                      <th>Category</th>
+                      <th>Stock Status</th>
+                      <th>Unit Price</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {MOCK_INVENTORY.map((item, i) => (
+                      <tr key={i}>
+                        <td className="gen-td-name">{item.name}</td>
+                        <td className="gen-td-category">{item.category}</td>
+                        <td>
+                          <span className={`gen-stock-badge ${item.stock < 15 ? 'gen-stock-badge--low' : ''}`}>
+                            {item.stock} units
+                          </span>
+                        </td>
+                        <td className="gen-td-price">{item.price}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
 
@@ -303,32 +306,36 @@ export default function ContentGeneration() {
               const rec = MOCK_RECOMMENDATIONS.find(r => r.id === selectedRec);
               return (
                 <div className="gen-review-card">
-                  <div className="gen-review-card__header">
-                    <div>
-                      <span className="gen-review-badge">{rec.platform}</span>
-                      <span className="gen-review-badge gen-review-badge--format">{rec.format}</span>
-                    </div>
-                    <button className="btn btn-ghost btn-sm" onClick={() => setStep(2)}>Change</button>
-                  </div>
-
-                  <h3 className="gen-review-card__product">{rec.product}</h3>
-
-                  <div className="gen-review-details">
-                    {[
-                      { label: 'Target Audience', value: rec.audience },
-                      { label: 'Pricing Strategy', value: rec.pricing },
-                      { label: 'Best Time to Post', value: rec.bestTime },
-                    ].map(d => (
-                      <div key={d.label} className="gen-review-detail">
-                        <span className="gen-review-detail__label">{d.label}</span>
-                        <span className="gen-review-detail__value">{d.value}</span>
+                  <div className="gen-review-card__main">
+                    <div className="gen-review-card__header">
+                      <div>
+                        <span className="gen-review-badge">{rec.platform}</span>
+                        <span className="gen-review-badge gen-review-badge--format">{rec.format}</span>
                       </div>
-                    ))}
+                      <button className="btn btn-ghost btn-sm" onClick={() => setStep(2)}>Change</button>
+                    </div>
+
+                    <h3 className="gen-review-card__product">{rec.product}</h3>
+
+                    <div className="gen-review-reason">
+                      <span className="gen-review-reason__label">Why GLM recommends this</span>
+                      <p>{rec.reason}</p>
+                    </div>
                   </div>
 
-                  <div className="gen-review-reason">
-                    <span className="gen-review-reason__label">Why GLM recommends this</span>
-                    <p>{rec.reason}</p>
+                  <div className="gen-review-card__sidebar">
+                    <div className="gen-review-details">
+                      {[
+                        { label: 'Target Audience', value: rec.audience },
+                        { label: 'Pricing Strategy', value: rec.pricing },
+                        { label: 'Best Time to Post', value: rec.bestTime },
+                      ].map(d => (
+                        <div key={d.label} className="gen-review-detail">
+                          <span className="gen-review-detail__label">{d.label}</span>
+                          <span className="gen-review-detail__value">{d.value}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               );
@@ -390,7 +397,7 @@ export default function ContentGeneration() {
               </div>
 
               {/* Captions */}
-              <div className="gen-output-card">
+              <div className="gen-output-card gen-output-card--captions">
                 <div className="gen-output-card__header">
                   <span className="gen-output-card__label">Caption Options</span>
                 </div>
@@ -411,7 +418,7 @@ export default function ContentGeneration() {
               </div>
 
               {/* Hashtags */}
-              <div className="gen-output-card">
+              <div className="gen-output-card gen-output-card--hashtags">
                 <div className="gen-output-card__header">
                   <span className="gen-output-card__label">Hashtags</span>
                   <button

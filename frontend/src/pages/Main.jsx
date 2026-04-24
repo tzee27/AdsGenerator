@@ -113,35 +113,6 @@ export default function Main() {
           <p className="page-header__subtitle">Browse AI-generated ad examples across platforms and formats.</p>
         </div>
 
-        {/* Stats */}
-        <div className="main-stats">
-          {[
-            { label: 'Ads Generated', value: '248' },
-            { label: 'Platforms', value: '5' },
-            { label: 'Categories', value: '12' },
-            { label: 'Avg. Engagement', value: '+34%' },
-          ].map(s => (
-            <div key={s.label} className="main-stat-card">
-              <span className="main-stat-card__value">{s.value}</span>
-              <span className="main-stat-card__label">{s.label}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* CTA */}
-        <div className="main-cta-bar">
-          <div className="main-cta-bar__text">
-            <h3>Ready to generate your own?</h3>
-            <p>Upload your inventory and let GLM build the strategy for you.</p>
-          </div>
-          <button className="btn btn-primary btn-lg" onClick={() => navigate('/generate')}>
-            Start Generating
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-            </svg>
-          </button>
-        </div>
-
         {/* Filters — stacked two-row layout */}
         <div className="main-filters">
           <div className="main-filter-row">

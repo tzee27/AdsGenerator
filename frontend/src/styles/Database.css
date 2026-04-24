@@ -87,6 +87,10 @@
   box-shadow: 0 2px 8px var(--color-shadow);
 }
 
+.db-table tbody tr:nth-child(even):not(.db-detail-row) {
+  background-color: var(--color-cream);
+}
+
 .db-table tbody tr:hover:not(.db-detail-row) {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px var(--color-shadow);

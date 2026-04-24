@@ -57,12 +57,12 @@
 }
 
 .main-filter-label {
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--color-text-primary);
-  min-width: 64px;
+  min-width: 90px;
   flex-shrink: 0;
 }
 
@@ -76,10 +76,10 @@
 .main-chip {
   display: inline-flex;
   align-items: center;
-  padding: 10px 24px;
+  padding: 12px 32px;
   border-radius: 100px;
-  font-size: 0.95rem;
-  font-weight: 500;
+  font-size: 1.1rem;
+  font-weight: 600;
   border: none;
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -106,9 +106,9 @@
 }
 
 .main-filter-result-count {
-  font-size: 0.82rem;
+  font-size: 1rem;
   color: var(--color-text-muted);
-  font-weight: 500;
+  font-weight: 600;
   align-self: flex-end;
 }
 
@@ -151,8 +151,8 @@
 /* Ad Grid */
 .main-ad-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 32px;
 }
 
 /* Empty */

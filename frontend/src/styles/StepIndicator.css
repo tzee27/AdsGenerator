@@ -17,16 +17,16 @@
 }
 
 .step-indicator__circle {
-  width: 36px;
-  height: 36px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  border: 2px solid var(--color-border-strong);
+  border: 3px solid var(--color-border-strong);
   background-color: var(--color-bg);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 1.1rem;
+  font-weight: 700;
   color: var(--color-text-muted);
   transition: all var(--transition-base);
   z-index: 2;
@@ -53,8 +53,8 @@
 }
 
 .step-indicator__label {
-  margin-top: 8px;
-  font-size: 0.75rem;
+  margin-top: 12px;
+  font-size: 1rem;
   font-weight: 500;
   color: var(--color-text-muted);
   text-align: center;
@@ -69,10 +69,10 @@
 
 .step-indicator__line {
   position: absolute;
-  top: 18px;
+  top: 24px;
   left: 50%;
   right: -50%;
-  height: 2px;
+  height: 3px;
   background-color: var(--color-border);
   transition: background-color var(--transition-base);
   z-index: 1;
