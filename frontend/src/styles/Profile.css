@@ -1,0 +1,310 @@
+/* Profile Page — Redesigned for Depth and Contrast */
+.profile-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+/* Sidebar Panel */
+.profile-sidebar-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Avatar Card — using a subtle gradient for depth */
+.profile-avatar-card {
+  background: linear-gradient(135deg, var(--color-surface) 0%, var(--color-surface-mid) 100%);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 10px 30px var(--color-shadow);
+}
+
+.profile-avatar {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background-color: #fcfcf2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 4px solid rgba(252, 252, 242, 0.3);
+}
+
+.profile-avatar__initials {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.profile-avatar__name {
+  font-size: 1.25rem;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+
+.profile-avatar__business {
+  font-size: 0.88rem;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.profile-avatar__email {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin-bottom: 24px;
+}
+
+.profile-edit-btn {
+  width: 100%;
+  background-color: rgba(252, 252, 242, 0.8);
+  border: 1px solid var(--color-border);
+  backdrop-filter: blur(4px);
+}
+
+.profile-edit-btn:hover {
+  background-color: #fcfcf2;
+  transform: translateY(-2px);
+}
+
+/* Stats Grid — modern dashboard style */
+.profile-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.profile-stat-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all var(--transition-fast);
+}
+
+.profile-stat-card:hover {
+  background-color: var(--color-bg);
+  border-color: var(--color-accent);
+  transform: translateY(-2px);
+}
+
+.profile-stat-card__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background-color: #fcfcf2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-accent);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.profile-stat-card__info {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-stat-card__value {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.profile-stat-card__label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  line-height: 1.2;
+}
+
+.profile-history-btn {
+  margin-top: 8px;
+  justify-content: center;
+}
+
+/* Main Panel */
+.profile-main-panel {
+  flex: 1;
+}
+
+/* Info Card — Using white/bg to pop from the surface backgrounds */
+.profile-info-card, .profile-form-card {
+  background-color: #fcfcf2;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-xl);
+  padding: 40px;
+  box-shadow: 0 4px 20px var(--color-shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-info-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle at top right, rgba(125, 145, 105, 0.05), transparent);
+  pointer-events: none;
+}
+
+.profile-info-card__title, .profile-form-card__title {
+  font-size: 1.2rem;
+  color: var(--color-text-primary);
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-info-card__title::after {
+  content: '';
+  height: 2px;
+  flex: 1;
+  background-color: var(--color-border);
+  opacity: 0.5;
+}
+
+/* Info Grid */
+.profile-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+.profile-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.profile-info-item__label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+.profile-info-item__value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+/* Platforms Row */
+.profile-platforms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.profile-no-platforms {
+  font-style: italic;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+/* Danger Zone */
+.profile-danger-zone h4 {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  margin-bottom: 16px;
+}
+
+.profile-danger-actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* Form Styles */
+.profile-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.profile-adtype-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.profile-adtype-btn {
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.profile-adtype-btn:hover {
+  border-color: var(--color-accent);
+  background-color: var(--color-surface);
+}
+
+.profile-adtype-btn--active {
+  background-color: var(--color-accent);
+  color: #fcfcf2;
+  border-color: var(--color-accent);
+}
+
+.profile-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 40px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-sidebar-panel {
+    order: 2;
+  }
+
+  .profile-main-panel {
+    order: 1;
+  }
+}
+
+@media (max-width: 600px) {
+  .profile-info-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .profile-info-card {
+    padding: 24px;
+  }
+
+  .profile-adtype-row {
+    grid-template-columns: 1fr;
+  }
+}

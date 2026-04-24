@@ -1,0 +1,189 @@
+/* Recommendation Card — Redesigned for Clarity */
+.rec-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-xl);
+  padding: 0;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.rec-card:hover {
+  border-color: var(--color-accent);
+  box-shadow: 0 12px 40px var(--color-shadow);
+  transform: translateY(-4px);
+}
+
+.rec-card--selected {
+  border-color: var(--color-accent);
+  border-width: 2px;
+  background-color: var(--color-bg);
+  box-shadow: 0 12px 40px rgba(125, 145, 105, 0.2);
+}
+
+/* Header Section */
+.rec-card__header {
+  padding: 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.rec-card__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rec-card__product-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  line-height: 1.3;
+}
+
+.rec-card__badges {
+  display: flex;
+  gap: 6px;
+}
+
+.rec-card__badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 10px;
+  border-radius: 100px;
+}
+
+.rec-card__badge--platform {
+  background-color: var(--color-surface-mid);
+  color: var(--color-text-secondary);
+}
+
+.rec-card__badge--format {
+  background-color: var(--color-accent);
+  color: #fcfcf2;
+}
+
+.rec-card__select-indicator {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.rec-card__select-indicator--active {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fcfcf2;
+}
+
+/* Strategy List */
+.rec-card__strategy-list {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+}
+
+.rec-card__strategy-item {
+  display: flex;
+  gap: 12px;
+}
+
+.rec-card__strategy-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.rec-card__strategy-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rec-card__strategy-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.rec-card__strategy-val {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+/* Insight Section */
+.rec-card__insight {
+  margin: 0 24px 20px;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  border-left: 3px solid var(--color-accent);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rec-card__insight-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-accent);
+}
+
+.rec-card__insight p {
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  font-style: italic;
+}
+
+/* Footer */
+.rec-card__footer {
+  padding: 14px 24px;
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+}
+
+.rec-card__select-text {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.rec-card--selected .rec-card__select-text {
+  color: var(--color-accent);
+}

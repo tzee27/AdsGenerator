@@ -1,0 +1,17 @@
+.shape-blob {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+}
+
+.shape-blob--surface {
+  background-color: var(--color-surface);
+}
+
+.shape-blob--surface-mid {
+  background-color: var(--color-surface-mid);
+}
+
+.shape-blob--surface-deep {
+  background-color: var(--color-surface-deep);
+}
