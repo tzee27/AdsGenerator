@@ -6,8 +6,8 @@
 }
 
 .theme-toggle__track {
-  width: 42px;
-  height: 24px;
+  width: 52px;
+  height: 28px;
   background-color: var(--color-surface-mid);
   border-radius: 100px;
   position: relative;
@@ -24,8 +24,8 @@
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   background-color: var(--color-bg);
   border-radius: 50%;
   display: flex;
@@ -36,11 +36,11 @@
 }
 
 .theme-toggle__track--dark .theme-toggle__thumb {
-  transform: translateX(18px);
+  transform: translateX(24px);
 }
 
 .theme-toggle__thumb svg {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   stroke: var(--color-accent);
 }

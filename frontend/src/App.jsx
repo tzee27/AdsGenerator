@@ -18,7 +18,7 @@ export default function App() {
     <div className="app-shell">
       {!isAuthPage && <Sidebar />}
 
-      <main className={isAuthPage ? '' : 'app-main'}>
+      <main className={isAuthPage ? 'app-main-full' : 'app-main'}>
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />

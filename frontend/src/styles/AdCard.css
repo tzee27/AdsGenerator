@@ -24,11 +24,11 @@
 }
 
 .ad-card__platform {
-  font-size: 0.75rem;
+  font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 3px 10px;
+  padding: 4px 12px;
   border-radius: 100px;
   background-color: var(--color-surface-mid);
   color: var(--color-text-secondary);
@@ -41,14 +41,14 @@
 .platform--lazada { background-color: rgba(125, 145, 105, 0.35); }
 
 .ad-card__format {
-  font-size: 0.72rem;
+  font-size: 0.85rem;
   color: var(--color-text-muted);
   font-weight: 500;
 }
 
 .ad-card__preview {
   margin: 0 16px;
-  height: 120px;
+  height: 180px;
   background-color: var(--color-surface-mid);
   border-radius: var(--radius-md);
   display: flex;
@@ -58,18 +58,19 @@
   gap: 8px;
   position: relative;
   overflow: hidden;
+  gap: 12px;
 }
 
 .ad-card__preview-shape {
-  width: 60px;
-  height: 60px;
+  width: 80px;
+  height: 80px;
   background-color: var(--color-surface-deep);
   border-radius: 50%;
   opacity: 0.4;
 }
 
 .ad-card__category {
-  font-size: 0.72rem;
+  font-size: 0.85rem;
   color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -82,9 +83,9 @@
 }
 
 .ad-card__caption p {
-  font-size: 0.82rem;
+  font-size: 0.95rem;
   color: var(--color-text-secondary);
-  line-height: 1.5;
+  line-height: 1.6;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -92,8 +93,8 @@
 }
 
 .ad-card__date {
-  padding: 8px 16px 14px;
-  font-size: 0.72rem;
+  padding: 12px 16px 18px;
+  font-size: 0.85rem;
   color: var(--color-text-muted);
   border-top: 1px solid var(--color-border);
 }

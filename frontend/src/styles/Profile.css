@@ -1,7 +1,7 @@
 /* Profile Page — Redesigned for Depth and Contrast */
 .profile-layout {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 400px 1fr;
   gap: 32px;
   align-items: flex-start;
 }
@@ -27,8 +27,8 @@
 }
 
 .profile-avatar {
-  width: 84px;
-  height: 84px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
   background-color: #fcfcf2;
   display: flex;
@@ -41,28 +41,28 @@
 
 .profile-avatar__initials {
   font-family: var(--font-display);
-  font-size: 1.8rem;
+  font-size: 2.8rem;
   font-weight: 700;
   color: var(--color-accent);
 }
 
 .profile-avatar__name {
-  font-size: 1.25rem;
+  font-size: 2.2rem;
   color: var(--color-text-primary);
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
 .profile-avatar__business {
-  font-size: 0.88rem;
+  font-size: 1.15rem;
   color: var(--color-text-secondary);
   font-weight: 600;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
 .profile-avatar__email {
-  font-size: 0.8rem;
+  font-size: 1rem;
   color: var(--color-text-muted);
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .profile-edit-btn {
@@ -120,18 +120,18 @@
 
 .profile-stat-card__value {
   font-family: var(--font-display);
-  font-size: 1.4rem;
+  font-size: 2.2rem;
   font-weight: 700;
   color: var(--color-text-primary);
 }
 
 .profile-stat-card__label {
-  font-size: 0.65rem;
+  font-size: 0.95rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-text-muted);
-  line-height: 1.2;
+  line-height: 1.4;
 }
 
 .profile-history-btn {
@@ -167,9 +167,9 @@
 }
 
 .profile-info-card__title, .profile-form-card__title {
-  font-size: 1.2rem;
+  font-size: 1.8rem;
   color: var(--color-text-primary);
-  margin-bottom: 32px;
+  margin-bottom: 40px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -197,7 +197,7 @@
 }
 
 .profile-info-item__label {
-  font-size: 0.72rem;
+  font-size: 1.1rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -205,7 +205,7 @@
 }
 
 .profile-info-item__value {
-  font-size: 0.95rem;
+  font-size: 1.6rem;
   font-weight: 600;
   color: var(--color-text-secondary);
 }

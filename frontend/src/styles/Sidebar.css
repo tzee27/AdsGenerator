@@ -19,15 +19,15 @@
 .sidebar__brand {
   display: flex;
   align-items: center;
-  padding: 20px 16px;
-  gap: 12px;
+  padding: 24px 20px;
+  gap: 16px;
   border-bottom: 1px solid var(--color-border);
-  min-height: 72px;
+  min-height: 88px;
 }
 
 .sidebar__logo {
-  width: 36px;
-  height: 36px;
+  width: 48px;
+  height: 48px;
   flex-shrink: 0;
   background-color: var(--color-surface-deep);
   border-radius: var(--radius-md);
@@ -46,7 +46,7 @@
 .sidebar__brand-name {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.4rem;
   color: var(--color-text-primary);
   white-space: nowrap;
 }
@@ -64,11 +64,11 @@
 .sidebar__nav-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 11px 12px;
+  gap: 16px;
+  padding: 16px 20px;
   border-radius: var(--radius-md);
   color: var(--color-text-muted);
-  font-size: 0.875rem;
+  font-size: 1.2rem;
   font-weight: 500;
   transition: all var(--transition-fast);
   white-space: nowrap;
@@ -90,8 +90,8 @@
 }
 
 .sidebar__nav-icon {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -99,32 +99,32 @@
 }
 
 .sidebar__nav-icon svg {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
 }
 
 .sidebar__nav-label {
-  font-size: 0.875rem;
+  font-size: 1.2rem;
 }
 
 /* Footer */
 .sidebar__footer {
-  padding: 16px 10px;
+  padding: 24px 16px;
   border-top: 1px solid var(--color-border);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 16px;
 }
 
 .sidebar__footer-label {
-  font-size: 0.78rem;
+  font-size: 0.95rem;
   color: var(--color-text-muted);
   flex: 1;
 }
 
 .sidebar__profile-btn {
-  width: 36px;
-  height: 36px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background-color: var(--color-surface-mid);
   display: flex;
@@ -142,8 +142,8 @@
 }
 
 .sidebar__profile-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
 }
 
 /* On small screens, sidebar overlaps but stays full width */
