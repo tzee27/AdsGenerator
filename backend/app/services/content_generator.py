@@ -60,13 +60,13 @@ RULES = """Rules:
 - Hashtags: use your judgement for count; each must start with '#' and contain no spaces.
 - image_prompt: describe ONE cohesive scene that clearly communicates the active promotion.
   Include promotional elements tied to the strategy pricing (e.g. discount badge, sale sticker,
-  voucher tag, price slash card). If the pricing contains a concrete offer like "20% off",
-  "RM 30 off", or "Buy 2 Free 1", include that exact offer text in the visual direction.
-  Keep any overlay text very short (max 3-5 words) and high-contrast.
+  voucher tag, price slash card). You may include the exact offer text and/or price in the
+  visual direction when it strengthens conversion.
 - If a featured product is provided, the image prompt must depict that exact product/model
   as the hero subject (not a generic category substitute). Mention distinctive physical cues
-  so the generated image aligns with the specific item.
-- Do NOT include brand logos/trademarks in the image prompt.
+  so the generated image aligns with the specific item, including model name and key specs
+  when relevant (e.g. size, color, form factor).
+- There is no hard limit on visual detail; prioritize contextual promotional storytelling.
 - All copy should be in English unless the product clearly demands another language.
 - Output RAW JSON only. No commentary, no code fences."""
 

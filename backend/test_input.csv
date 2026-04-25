@@ -1,13 +1,13 @@
 product_name,category,stock_level,price,date_added,expiry_date
-"Apple iPhone 15 Pro Silicone Case - Black",Electronics,320,59.00,2026-01-18,
-"Apple iPhone 15 Pro Clear Case with MagSafe",Electronics,260,55.00,2026-02-02,
-"UGREEN Nexode 67W USB-C GaN Charger",Electronics,140,129.00,2026-02-25,
-"Anker 543 USB-C to USB-C Braided Cable 2m",Electronics,420,39.00,2026-01-30,
-"Keychron K2 Wireless Mechanical Keyboard",Electronics,48,349.00,2026-03-05,
-"Logitech G304 LIGHTSPEED Gaming Mouse",Electronics,95,149.00,2026-03-22,
-"AOC 27G2SE 27-inch 165Hz Gaming Monitor",Electronics,22,1299.00,2026-02-10,
-"Sony WH-1000XM5 Noise Cancelling Headphones",Electronics,28,899.00,2026-04-06,
-"Samsung Galaxy Buds2 Pro True Wireless Earbuds",Electronics,64,459.00,2026-03-14,
-"Samsung 990 EVO 2TB NVMe SSD",Electronics,36,699.00,2026-02-28,
-"Logitech C920 HD Pro Webcam",Electronics,110,199.00,2026-03-18,
-"Xiaomi Mi 20000mAh 22.5W Power Bank",Electronics,175,169.00,2026-01-25,
+"Nestle Milo Activ-Go 1kg Refill Pack",Groceries,500,19.90,2026-02-05,2026-08-30
+"Maggi 2-Minute Curry Noodles 5-Pack",Groceries,150,8.90,2026-01-20,2026-10-15
+"Dutch Lady Full Cream UHT Milk 1L",Groceries,140,7.80,2026-03-12,2026-05-28
+"Farm Fresh Fresh Milk 1L",Groceries,90,8.50,2026-04-01,2026-05-05
+"Ayam Brand Sardines in Tomato Sauce 425g",Groceries,110,9.20,2026-02-27,2027-02-01
+"Kimball Spaghetti Pasta 400g",Groceries,210,4.60,2026-01-30,2027-01-20
+"Jasmine Super 5 Rice 5kg",Groceries,70,33.90,2026-03-03,2027-12-31
+"Adabi Chicken Curry Powder 250g",Groceries,130,6.40,2026-02-14,2027-06-10
+"Quaker Instant Oatmeal 800g",Groceries,95,14.50,2026-02-22,2026-11-12
+"Gardenia Original Classic Bread 400g",Groceries,160,3.40,2026-04-22,2026-04-29
+"RotiBoy Coffee Bun 6-Pack Frozen",Groceries,55,12.90,2026-03-25,2026-05-02
+"Julie’s Peanut Butter Sandwich Biscuits 360g",Groceries,190,7.20,2026-01-18,2026-12-20
