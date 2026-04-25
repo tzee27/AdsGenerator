@@ -2,7 +2,7 @@
  * Global pipeline-job state.
  *
  * Lives at the App root so the user can navigate anywhere while the GLM /
- * Gemini calls run in the background. Surfaces:
+ * GLM-Image calls run in the background. Surfaces:
  *   - status:       'idle' | 'running' | 'awaiting' | 'completed' | 'error'
  *   - phase:        'A' | 'B' | null     (which phase is in flight)
  *   - currentStepIndex: 0..PIPELINE_STEPS.length-1, advances over time
