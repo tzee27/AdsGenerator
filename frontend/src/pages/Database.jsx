@@ -103,9 +103,12 @@ export default function Database() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map(h => (
+            {filtered.map((h, index) => (
               <Fragment key={h.id}>
-                <tr className={expanded === h.id ? 'db-row--expanded' : ''}>
+                <tr 
+                  className={expanded === h.id ? 'db-row--expanded' : ''}
+                  data-row-color={index % 2 === 0 ? 'surface' : 'cream'}
+                >
                   <td><span className="db-id">{h.id}</span></td>
                   <td className="db-date">{h.date}</td>
                   <td className="db-product">{h.product}</td>
@@ -134,7 +137,11 @@ export default function Database() {
                 </tr>
 
                 {expanded === h.id && (
-                  <tr key={`${h.id}-detail`} className="db-detail-row">
+                  <tr 
+                    key={`${h.id}-detail`} 
+                    className="db-detail-row"
+                    data-row-color={index % 2 === 0 ? 'surface' : 'cream'}
+                  >
                     <td colSpan={7}>
                       <div className="db-detail">
                         <div className="db-detail__section">

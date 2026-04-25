@@ -82,12 +82,15 @@
 }
 
 .db-table tbody tr {
-  background-color: var(--color-surface);
   transition: all var(--transition-fast);
   box-shadow: 0 2px 8px var(--color-shadow);
 }
 
-.db-table tbody tr:nth-child(even):not(.db-detail-row) {
+.db-table tbody tr[data-row-color='surface'] {
+  background-color: var(--color-surface);
+}
+
+.db-table tbody tr[data-row-color='cream'] {
   background-color: var(--color-cream);
 }
 
@@ -152,7 +155,6 @@
   color: #fcfcf2;
 }
 
-/* Detail row */
 .db-detail-row td {
   padding: 0 20px 20px;
   background-color: var(--color-bg);
@@ -170,10 +172,17 @@
   grid-template-columns: 1fr 1fr;
   gap: 24px;
   padding: 20px;
-  background-color: var(--color-surface);
   border: 1px solid var(--color-border);
   border-top: none;
   border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.db-detail-row[data-row-color='surface'] .db-detail {
+  background-color: var(--color-surface);
+}
+
+.db-detail-row[data-row-color='cream'] .db-detail {
+  background-color: var(--color-cream);
 }
 
 .db-detail__section {
