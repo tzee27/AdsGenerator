@@ -1,16 +1,16 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import Sidebar from './components/Sidebar';
-import JobIndicator from './components/JobIndicator';
-import { JobProvider } from './context/JobContext';
-import Login from './pages/Login';
-import SignUp from './pages/SignUp';
-import Main from './pages/Main';
-import ContentGeneration from './pages/ContentGeneration';
-import Database from './pages/Database';
-import Profile from './pages/Profile';
-import './index.css';
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import Sidebar from "./components/Sidebar";
+import JobIndicator from "./components/JobIndicator";
+import { JobProvider } from "./context/JobContext";
+import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
+import Main from "./pages/Main";
+import ContentGeneration from "./pages/ContentGeneration";
+import Database from "./pages/Database";
+import Profile from "./pages/Profile";
+import "./index.css";
 
-const AUTH_ROUTES = ['/login', '/signup'];
+const AUTH_ROUTES = ["/login", "/signup"];
 
 export default function App() {
   const location = useLocation();
@@ -30,7 +30,7 @@ export default function App() {
 
         {!isAuthPage && <Sidebar />}
 
-        <main className={isAuthPage ? 'app-main-full' : 'app-main'}>
+        <main className={isAuthPage ? "app-main-full" : "app-main"}>
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
