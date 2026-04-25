@@ -38,11 +38,25 @@
   color: var(--color-text-secondary);
 }
 
-.platform--tiktok { background-color: rgba(125, 145, 105, 0.35); }
-.platform--shopee { background-color: rgba(125, 145, 105, 0.35); }
-.platform--instagram { background-color: rgba(125, 145, 105, 0.35); }
-.platform--facebook { background-color: rgba(125, 145, 105, 0.35); }
-.platform--lazada { background-color: rgba(125, 145, 105, 0.35); }
+.platform--tiktok {
+  background-color: rgba(125, 145, 105, 0.35);
+}
+
+.platform--shopee {
+  background-color: rgba(125, 145, 105, 0.35);
+}
+
+.platform--instagram {
+  background-color: rgba(125, 145, 105, 0.35);
+}
+
+.platform--facebook {
+  background-color: rgba(125, 145, 105, 0.35);
+}
+
+.platform--lazada {
+  background-color: rgba(125, 145, 105, 0.35);
+}
 
 .ad-card__format {
   font-size: 0.85rem;

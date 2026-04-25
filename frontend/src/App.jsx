@@ -16,6 +16,15 @@ export default function App() {
 
   return (
     <div className="app-shell">
+      {/* Background Mesh Elements */}
+      <div className="bg-mesh">
+        <div className="bg-mesh__blob bg-mesh__blob--1"></div>
+        <div className="bg-mesh__blob bg-mesh__blob--2"></div>
+        <div className="bg-mesh__blob bg-mesh__blob--3"></div>
+        <div className="bg-mesh__blob bg-mesh__blob--4"></div>
+        <div className="bg-mesh__blob bg-mesh__blob--5"></div>
+      </div>
+
       {!isAuthPage && <Sidebar />}
 
       <main className={isAuthPage ? 'app-main-full' : 'app-main'}>
