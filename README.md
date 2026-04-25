@@ -1,3 +1,7 @@
+## 🎥 Pitch Video
+
+> **Watch here:** [Pitch Video (Fiveo'clock).mp4](https://drive.google.com/file/d/1Xv03Y41kQsAJ-fbI3TbD3Z37C_oDlt7M/view?usp=sharing)
+
 # AdsGenerator — AI-Powered Advertising Strategy & Content Pipeline
 
 AdsGenerator is an intelligent marketing dashboard that transforms product inventory data into high-performing advertising campaigns. It analyzes inventory risk, gathers real-time market context via web-search enabled AI, and generates tailored ad creative (copy and visuals) using the Ilmu GLM 5.1 ecosystem.
