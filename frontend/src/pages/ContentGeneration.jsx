@@ -250,9 +250,9 @@ export default function ContentGeneration() {
         .join("\n\n"),
       captions: variants.map((v) => v.caption).filter(Boolean),
       hashtags: allHashtags,
-      image: finalResult.content?.image
+      image: finalResult.content?.image?.url || (finalResult.content?.image?.base64
         ? `data:${finalResult.content.image.mime_type};base64,${finalResult.content.image.base64}`
-        : null,
+        : null),
       explanation: finalResult.explanation,
       imagePrompt: finalResult.content?.image_prompt || "",
     };
