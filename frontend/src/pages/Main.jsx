@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import AdCard from '../components/AdCard';
 import { deleteHistoryEntry, listHistory } from '../lib/history';
 import '../styles/Main.css';
@@ -7,48 +8,7 @@ import '../styles/Main.css';
 const ALL_PLATFORMS = ['All', 'TikTok', 'Shopee', 'Instagram', 'Facebook', 'Lazada'];
 const ALL_FORMATS = ['All', 'Video', 'Image', 'Text'];
 
-const SAMPLE_ADS = [
-  {
-    id: 'sample-1', platform: 'TikTok', format: 'Video', category: 'Fashion',
-    caption: 'Trending now — our bamboo linen sets are flying off the shelves. Limited stock! Shop before Hari Raya rush hits. #HariRaya2025 #FashionTikTok',
-    date: '12 Apr 2025',
-    fullCaption: 'Trending now — our bamboo linen sets are flying off the shelves. Limited stock! Shop before Hari Raya rush hits. #HariRaya2025 #FashionTikTok #LimitedStock',
-    hashtags: ['#HariRaya2025', '#FashionTikTok', '#LimitedStock', '#BambooLinen', '#TikTokFashion'],
-    audience: 'Women 25–40, fashion-forward, urban lifestyle',
-    bestTime: 'Thursday–Friday, 8–10 PM',
-    pricing: 'Limited stock urgency — no discount needed',
-  },
-  {
-    id: 'sample-2', platform: 'Shopee', format: 'Image', category: 'Electronics',
-    caption: '11.11 MEGA SALE — Up to 60% off wireless earbuds. Bundle deal: Buy 2, get free shipping. Limited to first 200 orders.',
-    date: '10 Apr 2025',
-    fullCaption: '11.11 MEGA SALE — Up to 60% off wireless earbuds. Bundle deal: Buy 2, get free shipping. Limited to first 200 orders. Shopee Guaranteed — fast shipping within 1 day.',
-    hashtags: ['#11.11Sale', '#ShopeeFinds', '#WirelessEarbuds', '#MegaSale', '#TechDeals'],
-    audience: 'Tech-savvy buyers 18–35, students and remote workers',
-    bestTime: 'Saturday morning, 9–11 AM',
-    pricing: '60% off + free shipping on bundle',
-  },
-  {
-    id: 'sample-3', platform: 'Instagram', format: 'Image', category: 'Skincare',
-    caption: "Your skin deserves the best. Our vitamin C serum — now restocked. Perfect Valentine's gift for yourself. #SkincareCommunity",
-    date: '8 Apr 2025',
-    fullCaption: "Your skin deserves the best. Our vitamin C serum — now restocked after selling out in 3 days. Dermatologist-tested. Results in 14 days. Perfect Valentine's gift for yourself or someone special. #SkincareCommunity #GlassSkin",
-    hashtags: ['#SkincareCommunity', '#GlassSkin', '#VitaminC', '#SkincareRoutine', '#Restock'],
-    audience: 'Women 22–35, skincare enthusiasts',
-    bestTime: 'Sunday evening, 7–9 PM',
-    pricing: 'Full price — high demand justifies no discount',
-  },
-  {
-    id: 'sample-4', platform: 'Facebook', format: 'Text', category: 'Home & Living',
-    caption: 'Raya is coming! Refresh your home with our artisan cushion collection. Free delivery for orders above RM80. Shop now while stock lasts.',
-    date: '5 Apr 2025',
-    fullCaption: 'Raya is coming! Refresh your home with our artisan cushion collection — handcrafted, ethically made. Free delivery for orders above RM80. Bundle 3 and save 20%. Shop now while stock lasts.',
-    hashtags: ['#RayaSale', '#HomeRefresh', '#ArtisanCrafts', '#FreeDelivery', '#HomeDecor'],
-    audience: 'Married homeowners 28–50, family-oriented',
-    bestTime: 'Weekday evenings, 7–9 PM',
-    pricing: 'Free delivery above RM80 + 20% bundle discount',
-  },
-];
+
 
 function platformClass(p) {
   return (p || '').toLowerCase().replace(/[^a-z]/g, '');
@@ -70,7 +30,7 @@ function formatRelativeDate(iso) {
 function liveEntryToAd(entry) {
   return {
     id: entry.id,
-    isLive: true,
+    isLive: entry.isLive || false,
     platform: entry.platform,
     format: entry.format,
     category: entry.category,
@@ -86,7 +46,7 @@ function liveEntryToAd(entry) {
     angle: entry.angle,
     rationale: entry.rationale,
     image: entry.image
-      ? `data:${entry.image.mimeType};base64,${entry.image.base64}`
+      ? (typeof entry.image === 'string' ? entry.image : `data:${entry.image.mimeType};base64,${entry.image.base64}`)
       : null,
     date: formatRelativeDate(entry.createdAt),
     explanation: entry.explanation,
@@ -105,25 +65,33 @@ function normaliseFormat(format) {
 
 export default function Main() {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
+  
   const [activePlatform, setActivePlatform] = useState('All');
   const [activeFormat, setActiveFormat] = useState('All');
   const [selectedAd, setSelectedAd] = useState(null);
-  const [liveAds, setLiveAds] = useState(() => listHistory().map(liveEntryToAd));
+  const [liveAds, setLiveAds] = useState([]);
   const [copied, setCopied] = useState(false);
 
-  const refreshHistory = () => setLiveAds(listHistory().map(liveEntryToAd));
+  const loadHistory = useCallback(async () => {
+    if (currentUser) {
+      const ads = await listHistory(currentUser.uid);
+      setLiveAds(ads.map(liveEntryToAd));
+    } else {
+      setLiveAds([]);
+    }
+  }, [currentUser]);
 
-  // Re-read history when the window regains focus (e.g. after a fresh generation
-  // in another tab or after navigating back from /generate).
+  // Re-read history when the window regains focus or user changes
   useEffect(() => {
-    const onFocus = () => refreshHistory();
+    loadHistory();
+    const onFocus = () => loadHistory();
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
-  }, []);
+  }, [loadHistory]);
 
   const allAds = useMemo(() => {
-    if (liveAds.length === 0) return SAMPLE_ADS;
-    return [...liveAds, ...SAMPLE_ADS];
+    return liveAds;
   }, [liveAds]);
 
   const filtered = allAds.filter((ad) => {
@@ -132,11 +100,13 @@ export default function Main() {
     return platformMatch && formatMatch;
   });
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!id?.startsWith?.('gen-')) return;
-    deleteHistoryEntry(id);
-    setSelectedAd(null);
-    refreshHistory();
+    if (currentUser) {
+      await deleteHistoryEntry(currentUser.uid, id);
+      setSelectedAd(null);
+      loadHistory();
+    }
   };
 
   const handleCopyAll = (ad) => {
@@ -159,7 +129,7 @@ export default function Main() {
           <h1 className="page-header__title">Content Library</h1>
           <p className="page-header__subtitle">
             {liveAds.length > 0
-              ? `${liveAds.length} live ad${liveAds.length === 1 ? '' : 's'} you've generated, plus curated samples.`
+              ? `${liveAds.length} campaign${liveAds.length === 1 ? '' : 's'} saved to your database.`
               : 'Browse AI-generated ad examples across platforms and formats.'}
           </p>
         </div>
@@ -345,7 +315,7 @@ export default function Main() {
             <div className="ad-modal__divider-line" />
 
             <div className="ad-modal__footer">
-              {selectedAd.isLive && (
+              {selectedAd.id && (
                 <button
                   className="ad-modal__btn-secondary ad-modal__btn-danger"
                   onClick={() => handleDelete(selectedAd.id)}

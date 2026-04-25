@@ -26,10 +26,11 @@ class ContentVariant(BaseModel):
 
 
 class GeneratedImage(BaseModel):
-    """Inline base64 image produced by GLM-Image."""
+    """Image produced by GLM-Image, either inline or via URL."""
 
-    mime_type: str
-    base64: str
+    mime_type: Optional[str] = None
+    base64: Optional[str] = None
+    url: Optional[str] = None
 
 
 class ContentGenerationRequest(BaseModel):

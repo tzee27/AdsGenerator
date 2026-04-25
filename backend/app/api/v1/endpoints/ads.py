@@ -14,7 +14,8 @@ Status codes:
 
 from typing import Optional
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status, Depends
+from app.core.security import get_current_user
 
 from app.schemas.ads import (
     AdsGenerationErrorDetail,
@@ -114,6 +115,7 @@ async def strategies(
         le=5,
         description="How many distinct strategies to propose (default 2, max 5).",
     ),
+    current_user: dict = Depends(get_current_user),
 ) -> StrategiesResponse:
     if not file.filename or not file.filename.lower().endswith(".csv"):
         raise HTTPException(
@@ -137,7 +139,8 @@ async def strategies(
         ) from exc
 
     try:
-        return run_phase_a(content, area=area, count=count)
+        res = run_phase_a(content, area=area, count=count)
+        return res
     except RiskAnalyserError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except OrchestratorError as exc:
@@ -160,14 +163,18 @@ async def strategies(
         503: {"description": "GLM-text or GLM-Image not configured (missing API key)"},
     },
 )
-def finalize(payload: FinalizeRequest) -> FinalizeResponse:
+def finalize(
+    payload: FinalizeRequest,
+    current_user: dict = Depends(get_current_user),
+) -> FinalizeResponse:
     try:
-        return run_phase_b(
+        res = run_phase_b(
             selected=payload.selected_strategy,
             risk=payload.risk_analysis,
             context=payload.live_context,
             area=payload.area,
         )
+        return res
     except OrchestratorError as exc:
         _raise_for_orchestrator_error(exc)
     except ValueError as exc:

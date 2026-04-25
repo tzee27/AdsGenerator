@@ -18,7 +18,7 @@ from app.services import content_generator, context_gatherer
 from app.services import explanation_generator, strategy_decider
 from app.services.glm_client import GLMClientError, GLMNotConfiguredError
 from app.services.glm_image_client import (
-    GeneratedImageBytes,
+    GeneratedImageResult,
     GLMImageClientError,
     GLMImageNotConfiguredError,
 )
@@ -155,8 +155,8 @@ GOOD_EXPLANATION = {
 }
 
 
-def _fake_image(prompt: str, **_kwargs) -> GeneratedImageBytes:
-    return GeneratedImageBytes(data=FAKE_PNG_BYTES, mime_type="image/png")
+def _fake_image(prompt: str, **_kwargs) -> GeneratedImageResult:
+    return GeneratedImageResult(url="https://fake.url/image.png", data=FAKE_PNG_BYTES, mime_type="image/png")
 
 
 def _make_dispatching_glm():
@@ -284,7 +284,8 @@ def test_phase_b_happy_path() -> None:
     assert result.metadata.featured_product.product == "Old Yogurt"
     assert result.metadata.unit_price_rm == 15.0
     assert len(result.content.content_variants) == 3
-    assert base64.b64decode(result.content.image.base64) == FAKE_PNG_BYTES
+    assert result.content.image.url == "https://fake.url/image.png"
+    assert result.content.image.mime_type == "image/png"
     assert result.explanation.platform_choice.platform == "TikTok"
     assert result.explanation.financial_projection.average_order_value_rm == 15.0
     assert set(result.metadata.timing_ms) == {"content", "explanation"}
@@ -343,7 +344,7 @@ def test_phase_b_propagates_content_failure() -> None:
 def test_phase_b_propagates_image_failure() -> None:
     phase_a = run_phase_a(_csv(), today=TODAY, glm_fn=_make_dispatching_glm())
 
-    def boom_image(prompt: str, **_kwargs) -> GeneratedImageBytes:
+    def boom_image(prompt: str, **_kwargs) -> GeneratedImageResult:
         raise GLMImageClientError("GLM-Image timeout")
 
     try:
@@ -525,10 +526,8 @@ def test_finalize_endpoint_happy_path(monkeypatch) -> None:
     assert {"content", "explanation", "metadata"} <= data.keys()
     assert data["metadata"]["featured_product"]["product"] == "Old Yogurt"
     assert len(data["content"]["content_variants"]) == 3
+    assert data["content"]["image"]["url"] == "https://fake.url/image.png"
     assert data["content"]["image"]["mime_type"] == "image/png"
-    assert (
-        base64.b64decode(data["content"]["image"]["base64"]) == FAKE_PNG_BYTES
-    )
 
 
 def test_finalize_endpoint_returns_502_when_image_fails(monkeypatch) -> None:

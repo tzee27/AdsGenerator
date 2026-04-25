@@ -1,5 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { doc, updateDoc, collection, addDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import '../styles/Profile.css';
 
 const PLATFORMS = ['Shopee', 'Lazada', 'TikTok Shop', 'Instagram', 'Facebook'];
@@ -11,15 +14,31 @@ const AD_TYPES = [
 
 export default function Profile() {
   const navigate = useNavigate();
+  const { currentUser, userData, logout } = useAuth();
   const [editing, setEditing] = useState(false);
+  
   const [profile, setProfile] = useState({
-    name: 'Amirah Zaharuddin',
-    email: 'amirah@greenleafstore.com',
-    businessName: 'Green Leaf Store',
+    name: '',
+    email: '',
+    businessName: '',
     preferredAdType: 'video',
-    platforms: ['Shopee', 'TikTok Shop'],
+    platforms: [],
   });
   const [draft, setDraft] = useState(profile);
+
+  useEffect(() => {
+    if (currentUser || userData) {
+      const loadedProfile = {
+        name: userData?.name || 'New User',
+        email: currentUser?.email || '',
+        businessName: userData?.businessName || '',
+        preferredAdType: userData?.preferredAdType || 'video',
+        platforms: userData?.platforms || [],
+      };
+      setProfile(loadedProfile);
+      setDraft(loadedProfile);
+    }
+  }, [currentUser, userData]);
 
   const togglePlatform = (p) => {
     setDraft(d => ({
@@ -30,14 +49,130 @@ export default function Profile() {
     }));
   };
 
-  const saveChanges = () => {
-    setProfile(draft);
-    setEditing(false);
+  const saveChanges = async () => {
+    if (currentUser) {
+      try {
+        const userRef = doc(db, 'users', currentUser.uid);
+        await updateDoc(userRef, {
+          name: draft.name,
+          businessName: draft.businessName,
+          preferredAdType: draft.preferredAdType,
+          platforms: draft.platforms
+        });
+        setProfile(draft);
+        setEditing(false);
+      } catch (error) {
+        console.error("Error updating profile:", error);
+        alert("Failed to save profile changes.");
+      }
+    }
   };
 
   const cancelEdit = () => {
     setDraft(profile);
     setEditing(false);
+  };
+
+  const loadDemoData = async () => {
+    if (!currentUser) return;
+    try {
+      const demoAds = [
+        {
+          createdAt: new Date().toISOString(),
+          platform: 'TikTok',
+          format: 'Video',
+          category: 'Fashion',
+          productName: 'Bamboo Linen Set (Queen)',
+          caption: 'Trending now — our bamboo linen sets are flying off the shelves. Limited stock! Shop before Hari Raya rush hits. #HariRaya2025 #FashionTikTok',
+          fullCaption: 'Trending now — our bamboo linen sets are flying off the shelves. Limited stock! Shop before Hari Raya rush hits. #HariRaya2025 #FashionTikTok #LimitedStock',
+          headline: 'Hari Raya Promo: Limited Stock!',
+          callToAction: 'Shop Now',
+          hashtags: ['#HariRaya2025', '#FashionTikTok', '#LimitedStock', '#BambooLinen', '#TikTokFashion'],
+          audience: 'Women 25–40, fashion-forward, urban lifestyle',
+          bestTime: 'Thursday–Friday, 8–10 PM',
+          pricing: 'Limited stock urgency — no discount needed',
+          budget: 'RM 100',
+          angle: 'Urgency & Scarcity',
+          image: '/images/sample_bamboo_linen.png',
+          status: 'completed',
+          source: 'ads/finalize',
+          isLive: true,
+          isDeleted: false
+        },
+        {
+          createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+          platform: 'Shopee',
+          format: 'Image',
+          category: 'Electronics',
+          productName: 'Wireless Earbuds Pro',
+          caption: '11.11 MEGA SALE — Up to 60% off wireless earbuds. Bundle deal: Buy 2, get free shipping. Limited to first 200 orders.',
+          fullCaption: '11.11 MEGA SALE — Up to 60% off wireless earbuds. Bundle deal: Buy 2, get free shipping. Limited to first 200 orders. Shopee Guaranteed — fast shipping within 1 day.',
+          headline: 'Up to 60% OFF + Free Shipping',
+          callToAction: 'Add to Cart',
+          hashtags: ['#11.11Sale', '#ShopeeFinds', '#WirelessEarbuds', '#MegaSale', '#TechDeals'],
+          audience: 'Tech-savvy buyers 18–35, students and remote workers',
+          bestTime: 'Saturday morning, 9–11 AM',
+          pricing: '60% off + free shipping on bundle',
+          budget: 'RM 250',
+          angle: 'Huge Discount & Value',
+          image: '/images/sample_earbuds.png',
+          status: 'completed',
+          source: 'ads/finalize',
+          isLive: true,
+          isDeleted: false
+        },
+        {
+          createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+          platform: 'Instagram',
+          format: 'Image',
+          category: 'Skincare',
+          productName: 'Vitamin C Glow Serum',
+          caption: "Your skin deserves the best. Our vitamin C serum — now restocked. Perfect Valentine's gift for yourself. #SkincareCommunity",
+          fullCaption: "Your skin deserves the best. Our vitamin C serum — now restocked after selling out in 3 days. Dermatologist-tested. Results in 14 days. Perfect Valentine's gift for yourself or someone special. #SkincareCommunity #GlassSkin",
+          headline: 'Back in Stock: The Glow Secret',
+          callToAction: 'Shop Now',
+          hashtags: ['#SkincareCommunity', '#GlassSkin', '#VitaminC', '#SkincareRoutine', '#Restock'],
+          audience: 'Women 22–35, skincare enthusiasts',
+          bestTime: 'Sunday evening, 7–9 PM',
+          pricing: 'Full price — high demand justifies no discount',
+          budget: 'RM 150',
+          angle: 'Premium & Exclusive',
+          image: '/images/sample_serum.png',
+          status: 'completed',
+          source: 'ads/finalize',
+          isDeleted: false
+        },
+        {
+          createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+          platform: 'Facebook',
+          format: 'Text',
+          category: 'Home & Living',
+          productName: 'Artisan Cushion Collection',
+          caption: 'Raya is coming! Refresh your home with our artisan cushion collection. Free delivery for orders above RM80. Shop now while stock lasts.',
+          fullCaption: 'Raya is coming! Refresh your home with our artisan cushion collection — handcrafted, ethically made. Free delivery for orders above RM80. Bundle 3 and save 20%. Shop now while stock lasts.',
+          headline: 'Refresh Your Home for Raya',
+          callToAction: 'Shop the Collection',
+          hashtags: ['#RayaSale', '#HomeRefresh', '#ArtisanCrafts', '#FreeDelivery', '#HomeDecor'],
+          audience: 'Married homeowners 28–50, family-oriented',
+          bestTime: 'Weekday evenings, 7–9 PM',
+          pricing: 'Free delivery above RM80 + 20% bundle discount',
+          budget: 'RM 80',
+          angle: 'Bundle Savings',
+          image: '/images/sample_cushion.png',
+          status: 'completed',
+          source: 'ads/finalize',
+          isDeleted: false
+        }
+      ];
+
+      for (const ad of demoAds) {
+        await addDoc(collection(db, 'users', currentUser.uid, 'savedAds'), ad);
+      }
+      alert("4 Rich Demo Ads successfully loaded to Database! Check your History tab.");
+    } catch (error) {
+      console.error("Failed to load demo data", error);
+      alert("Error loading demo data.");
+    }
   };
 
   const stats = [
@@ -80,7 +215,7 @@ export default function Profile() {
           <div className="profile-avatar-card">
             <div className="profile-avatar">
               <span className="profile-avatar__initials">
-                {profile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                {profile.name ? profile.name.split(' ').map(n => n?.[0]).join('').toUpperCase().slice(0, 2) : 'U'}
               </span>
             </div>
             <h2 className="profile-avatar__name">{profile.name}</h2>
@@ -113,7 +248,7 @@ export default function Profile() {
 
           <button
             className="btn btn-ghost profile-history-btn"
-            onClick={() => navigate('/database')}
+            onClick={() => navigate('/main')}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="16" height="16">
               <ellipse cx="12" cy="5" rx="9" ry="3" />
@@ -239,13 +374,16 @@ export default function Profile() {
               <div className="profile-danger-zone">
                 <h4>Account Actions</h4>
                 <div className="profile-danger-actions">
-                  <button className="btn btn-ghost btn-sm" onClick={() => navigate('/login')}>
+                  <button className="btn btn-ghost btn-sm" onClick={async () => { await logout(); navigate('/login'); }}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="14" height="14">
                       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                       <polyline points="16 17 21 12 16 7" />
                       <line x1="21" y1="12" x2="9" y2="12" />
                     </svg>
                     Sign Out
+                  </button>
+                  <button className="btn btn-primary btn-sm" onClick={loadDemoData} style={{marginLeft: '10px'}}>
+                    Load Demo Data
                   </button>
                 </div>
               </div>

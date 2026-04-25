@@ -22,6 +22,7 @@ import {
   stepIndexFromElapsed,
 } from "./jobConstants";
 import { JobContext } from "./jobContextInstance";
+import { useAuth } from "../contexts/AuthContext";
 
 const initialState = {
   status: "idle", // 'idle' | 'running' | 'awaiting' | 'completed' | 'error'
@@ -38,6 +39,7 @@ const initialState = {
 };
 
 export function JobProvider({ children }) {
+  const { currentUser } = useAuth();
   const [state, setState] = useState(initialState);
   const phaseStartRef = useRef(null);
   const tickRef = useRef(null);
@@ -204,11 +206,13 @@ export function JobProvider({ children }) {
         signal: controller.signal,
       });
       stopTimer();
-      saveGeneratedAd({
-        phaseAResponse: phaseA,
-        selectedStrategy: selected,
-        finalizeResponse: data,
-      });
+      if (currentUser) {
+        await saveGeneratedAd(currentUser.uid, {
+          phaseAResponse: phaseA,
+          selectedStrategy: selected,
+          finalizeResponse: data,
+        });
+      }
       setState((prev) => ({
         ...prev,
         status: "completed",
@@ -240,6 +244,7 @@ export function JobProvider({ children }) {
     state.selectedIdx,
     state.status,
     stopTimer,
+    currentUser,
   ]);
 
   const value = useMemo(

@@ -158,7 +158,7 @@ def _coerce_payload(raw: dict) -> tuple[list[ContentVariant], str]:
 
 
 GlmCallable = Callable[..., dict]
-ImageCallable = Callable[..., _image.GeneratedImageBytes]
+ImageCallable = Callable[..., _image.GeneratedImageResult]
 
 
 def generate_content(
@@ -193,14 +193,14 @@ def generate_content(
     variants, image_prompt = _coerce_payload(raw)
     logger.info("GLM-Image prompt: %s", image_prompt)
 
-    image_bytes = call_image(
+    image_result = call_image(
         image_prompt,
         platform=strategy.platform,
         format_hint=strategy.format,
     )
     image = GeneratedImage(
-        mime_type=image_bytes.mime_type,
-        base64=base64.b64encode(image_bytes.data).decode("ascii"),
+        url=image_result.url,
+        mime_type=image_result.mime_type,
     )
 
     return ContentGenerationResponse(

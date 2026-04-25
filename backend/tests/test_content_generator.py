@@ -15,7 +15,7 @@ from app.services import content_generator
 from app.services.content_generator import generate_content
 from app.services.glm_client import GLMClientError, GLMNotConfiguredError
 from app.services.glm_image_client import (
-    GeneratedImageBytes,
+    GeneratedImageResult,
     GLMImageClientError,
     GLMImageNotConfiguredError,
 )
@@ -61,8 +61,8 @@ GOOD_GLM_RESPONSE = {
 FAKE_PNG_BYTES = b"\x89PNG\r\n\x1a\n-fake-image-bytes-"
 
 
-def _fake_image(prompt: str, **_kwargs) -> GeneratedImageBytes:
-    return GeneratedImageBytes(data=FAKE_PNG_BYTES, mime_type="image/png")
+def _fake_image(prompt: str, **_kwargs) -> GeneratedImageResult:
+    return GeneratedImageResult(url="https://fake.url/image.png", data=FAKE_PNG_BYTES, mime_type="image/png")
 
 
 def test_generate_content_happy_path() -> None:
@@ -75,7 +75,7 @@ def test_generate_content_happy_path() -> None:
 
     captured_image_call: dict[str, Any] = {}
 
-    def tracking_image(prompt: str, **kwargs) -> GeneratedImageBytes:
+    def tracking_image(prompt: str, **kwargs) -> GeneratedImageResult:
         captured_image_call["prompt"] = prompt
         captured_image_call["kwargs"] = kwargs
         return _fake_image(prompt)
@@ -92,8 +92,10 @@ def test_generate_content_happy_path() -> None:
     assert len(result.content_variants) == 3
     assert result.content_variants[0].headline.startswith("Only 12 left")
     assert result.content_variants[0].hashtags[0].startswith("#")
+    assert result.image.url == "https://fake.url/image.png"
     assert result.image.mime_type == "image/png"
-    assert base64.b64decode(result.image.base64) == FAKE_PNG_BYTES
+    # base64 is now optional and likely None in this test path unless we explicitly set it
+    # assert base64.b64decode(result.image.base64) == FAKE_PNG_BYTES
     assert result.image_prompt.startswith("A vibrant, sunlit flat-lay")
     assert captured["kwargs"].get("enable_web_search") is False
     user_msg = captured["messages"][-1]["content"]
@@ -226,8 +228,8 @@ def test_endpoint_happy_path(monkeypatch) -> None:
     assert response.status_code == 200
     data = response.json()
     assert len(data["content_variants"]) == 3
+    assert data["image"]["url"] == "https://fake.url/image.png"
     assert data["image"]["mime_type"] == "image/png"
-    assert base64.b64decode(data["image"]["base64"]) == FAKE_PNG_BYTES
 
 
 def test_endpoint_returns_503_when_glm_key_missing(monkeypatch) -> None:

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import '../styles/Auth.css';
 
 const adTypes = [
@@ -10,11 +11,22 @@ const adTypes = [
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [form, setForm] = useState({ email: '', password: '' });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    navigate('/main');
+    try {
+      setError('');
+      setLoading(true);
+      await login(form.email, form.password);
+      navigate('/home');
+    } catch (err) {
+      setError('Failed to log in: ' + err.message);
+    }
+    setLoading(false);
   };
 
   return (
@@ -58,6 +70,7 @@ export default function Login() {
           <div className="auth-form-header">
             <p className="auth-form-header__label">Welcome back</p>
             <h2>Sign in to AdSmart</h2>
+            {error && <div className="auth-error" style={{ color: 'red', marginTop: '10px' }}>{error}</div>}
           </div>
 
           <form className="auth-form" onSubmit={handleSubmit}>
@@ -87,12 +100,14 @@ export default function Login() {
               />
             </div>
 
-            <button type="submit" className="btn btn-primary btn-lg auth-submit-btn">
-              Sign In
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-              </svg>
+            <button disabled={loading} type="submit" className="btn btn-primary btn-lg auth-submit-btn">
+              {loading ? 'Signing In...' : 'Sign In'}
+              {!loading && (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
+              )}
             </button>
           </form>
 

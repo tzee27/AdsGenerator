@@ -6,6 +6,8 @@
  * (e.g. the orchestrator's `failed_part`/`completed` payload).
  */
 
+import { auth } from './firebase';
+
 const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace(/\/+$/, '');
 
 /** Custom error carrying HTTP status + parsed backend detail (string or object). */
@@ -48,6 +50,15 @@ async function request(path, { method = 'GET', body, headers, signal } = {}) {
   const finalHeaders = { Accept: 'application/json', ...(headers || {}) };
   if (body && !isFormData && !finalHeaders['Content-Type']) {
     finalHeaders['Content-Type'] = 'application/json';
+  }
+
+  if (auth.currentUser) {
+    try {
+      const token = await auth.currentUser.getIdToken();
+      finalHeaders['Authorization'] = `Bearer ${token}`;
+    } catch (e) {
+      console.warn("Could not get Firebase token", e);
+    }
   }
 
   let response;

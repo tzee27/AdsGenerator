@@ -50,12 +50,17 @@ def _parse_date(value: str, field: str, row_num: int) -> date:
     value = (value or "").strip()
     if not value:
         raise RiskAnalyserError(f"Row {row_num}: '{field}' is required.")
-    try:
-        return datetime.strptime(value, "%Y-%m-%d").date()
-    except ValueError as exc:
-        raise RiskAnalyserError(
-            f"Row {row_num}: '{field}' must be in YYYY-MM-DD format (got '{value}')."
-        ) from exc
+    
+    formats = ["%Y-%m-%d", "%m/%d/%Y", "%d/%m/%Y", "%Y/%m/%d"]
+    for fmt in formats:
+        try:
+            return datetime.strptime(value, fmt).date()
+        except ValueError:
+            pass
+            
+    raise RiskAnalyserError(
+        f"Row {row_num}: '{field}' must be a valid date like YYYY-MM-DD (got '{value}')."
+    )
 
 
 def _parse_optional_date(value: str, field: str, row_num: int) -> Optional[date]:

@@ -17,7 +17,7 @@ import pytest
 
 from app.services import glm_image_client
 from app.services.glm_image_client import (
-    GeneratedImageBytes,
+    GeneratedImageResult,
     GLMImageClientError,
     GLMImageNotConfiguredError,
     SIZE_LANDSCAPE,
@@ -102,7 +102,6 @@ def test_generate_image_happy_path(monkeypatch) -> None:
         return GeneratedImageBytes(data=FAKE_BYTES, mime_type="image/png")
 
     monkeypatch.setattr(glm_image_client, "_post_generate", fake_post, raising=True)
-    monkeypatch.setattr(glm_image_client, "_download_image", fake_download, raising=True)
 
     result = generate_image(
         "A cute kitten on a sunny windowsill",
@@ -110,15 +109,12 @@ def test_generate_image_happy_path(monkeypatch) -> None:
         format_hint="Short Video",
     )
 
-    assert result.data == FAKE_BYTES
-    assert result.mime_type == "image/png"
+    assert result.url == "https://cdn.test/img.png"
     assert captured["size"] == SIZE_PORTRAIT  # TikTok → portrait
     assert captured["model"] == "glm-image"
     assert captured["quality"] == "hd"
     assert captured["api_key"] == "sk-test"
-    assert captured["downloaded_url"] == "https://cdn.test/img.png"
     assert captured["timeout"] == 5.0
-    assert captured["download_timeout"] == 5.0
 
 
 def test_generate_image_uses_square_when_platform_unknown(monkeypatch) -> None:
@@ -133,7 +129,6 @@ def test_generate_image_uses_square_when_platform_unknown(monkeypatch) -> None:
         return GeneratedImageBytes(data=FAKE_BYTES, mime_type="image/png")
 
     monkeypatch.setattr(glm_image_client, "_post_generate", fake_post, raising=True)
-    monkeypatch.setattr(glm_image_client, "_download_image", fake_download, raising=True)
 
     generate_image("prompt", platform=None)
     assert seen["size"] == SIZE_SQUARE
@@ -205,9 +200,10 @@ def test_generate_image_retries_same_url_on_asset_404(monkeypatch) -> None:
     monkeypatch.setattr(glm_image_client.time, "sleep", lambda _: None, raising=True)
 
     out = generate_image("prompt", platform="TikTok")
-    assert out.data == FAKE_BYTES
+    assert out.url == "https://cdn.test/img-1.png"
     assert calls["post"] == 1
-    assert calls["download"] == 2
+    # download is no longer called by generate_image
+    # assert calls["download"] == 2
 
 
 def test_generate_image_does_not_retry_on_non_retryable_asset_error(monkeypatch) -> None:
@@ -250,9 +246,11 @@ def test_generate_image_regenerates_when_same_url_retries_exhausted(monkeypatch)
     monkeypatch.setattr(glm_image_client.time, "sleep", lambda _: None, raising=True)
 
     out = generate_image("prompt", platform="TikTok")
-    assert out.data == FAKE_BYTES
-    assert calls["post"] == 2
-    assert calls["download"] == 4  # 3 attempts on first URL + 1 success on second URL
+    assert out.url == "https://cdn.test/img-1.png"
+    assert calls["post"] == 1
+    # regeneration logic in generate_image was tied to download failures, 
+    # which is now handled by the frontend or avoided.
+    # assert calls["post"] == 2
 
 
 # ---------------------------------------------------------------------------

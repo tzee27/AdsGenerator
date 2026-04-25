@@ -6,29 +6,10 @@
  * everything (variants, image, explanation) on demand.
  */
 
-const STORAGE_KEY = 'adsgen.history.v1';
+import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
+import { db } from './firebase';
+
 const MAX_ENTRIES = 50;
-
-function readAll() {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeAll(entries) {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(entries.slice(0, MAX_ENTRIES)));
-  } catch {
-    // Quota exceeded or storage disabled — fail silently.
-  }
-}
 
 function pickFirstVariant(variants) {
   return Array.isArray(variants) && variants.length > 0 ? variants[0] : null;
@@ -65,9 +46,9 @@ function buildEntry({ phaseAResponse, selectedStrategy, finalizeResponse }) {
     budget: strategy?.budget || '',
     angle: strategy?.angle || '',
     rationale: selectedStrategy?.rationale || '',
-    image: image
+    image: image?.url || (image?.base64
       ? { mimeType: image.mime_type, base64: image.base64 }
-      : null,
+      : null),
     variants: finalizeResponse?.content?.content_variants || [],
     explanation: finalizeResponse?.explanation || null,
     metadata: finalizeResponse?.metadata || null,
@@ -76,21 +57,39 @@ function buildEntry({ phaseAResponse, selectedStrategy, finalizeResponse }) {
   };
 }
 
-export function listHistory() {
-  return readAll();
+export async function listHistory(userId) {
+  if (!userId) return [];
+  try {
+    const q = query(collection(db, 'users', userId, 'savedAds'), orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (e) {
+    console.error("Failed to fetch history:", e);
+    return [];
+  }
 }
 
-export function saveGeneratedAd(payload) {
+export async function saveGeneratedAd(userId, payload) {
+  if (!userId) throw new Error("User ID is required to save an ad.");
   const entry = buildEntry(payload);
-  const next = [entry, ...readAll().filter((e) => e.id !== entry.id)];
-  writeAll(next);
-  return entry;
+  
+  // Remove the temporary ID, let Firestore generate one
+  const { id, ...dataToSave } = entry;
+  
+  try {
+    const docRef = await addDoc(collection(db, 'users', userId, 'savedAds'), dataToSave);
+    return { id: docRef.id, ...dataToSave };
+  } catch (e) {
+    console.error("Failed to save ad:", e);
+    throw e;
+  }
 }
 
-export function clearHistory() {
-  writeAll([]);
-}
-
-export function deleteHistoryEntry(id) {
-  writeAll(readAll().filter((e) => e.id !== id));
+export async function deleteHistoryEntry(userId, adId) {
+  if (!userId || !adId) return;
+  try {
+    await deleteDoc(doc(db, 'users', userId, 'savedAds', adId));
+  } catch (e) {
+    console.error("Failed to delete ad:", e);
+  }
 }

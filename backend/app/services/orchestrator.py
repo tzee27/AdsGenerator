@@ -53,7 +53,7 @@ MAX_CONTEXT_PRODUCTS = 8
 
 
 GlmCallable = Callable[..., dict]
-ImageCallable = Callable[..., _image.GeneratedImageBytes]
+ImageCallable = Callable[..., _image.GeneratedImageResult]
 
 
 class OrchestratorError(RuntimeError):

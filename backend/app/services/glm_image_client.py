@@ -39,9 +39,10 @@ class GLMImageNotConfiguredError(GLMImageClientError):
 
 
 @dataclass(slots=True)
-class GeneratedImageBytes:
-    data: bytes
-    mime_type: str
+class GeneratedImageResult:
+    url: str
+    data: Optional[bytes] = None
+    mime_type: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
@@ -125,7 +126,7 @@ def _post_generate(
         ) from exc
 
 
-def _download_image(url: str, *, timeout: float) -> GeneratedImageBytes:
+def _download_image(url: str, *, timeout: float) -> GeneratedImageResult:
     """Fetch the temporary image URL and return raw bytes + MIME type."""
     try:
         with httpx.Client(timeout=timeout, follow_redirects=True) as client:
@@ -151,10 +152,10 @@ def _download_image(url: str, *, timeout: float) -> GeneratedImageBytes:
     )
     # Some CDNs append "; charset=..." — strip parameters for cleanliness.
     mime = mime.split(";", 1)[0].strip() or "image/png"
-    return GeneratedImageBytes(data=data, mime_type=mime)
+    return GeneratedImageResult(url=url, data=data, mime_type=mime)
 
 
-def _download_with_retry(url: str, *, timeout: float) -> GeneratedImageBytes:
+def _download_with_retry(url: str, *, timeout: float) -> GeneratedImageResult:
     """Retry fetching the same URL for short-lived CDN propagation delays."""
     last_error: Optional[GLMImageClientError] = None
     for attempt in range(1, ASSET_FETCH_ATTEMPTS_PER_URL + 1):
@@ -187,7 +188,7 @@ def generate_image(
     *,
     platform: Optional[str] = None,
     format_hint: Optional[str] = None,
-) -> GeneratedImageBytes:
+) -> GeneratedImageResult:
     """Generate one image from a text prompt using GLM-Image.
 
     Args:
@@ -197,7 +198,7 @@ def generate_image(
             the aspect-ratio decision when the platform alone is ambiguous.
 
     Returns:
-        Raw image bytes + MIME type so callers can base64-encode inline.
+        Generated image URL (plus optional raw bytes if needed).
 
     Raises:
         GLMImageNotConfiguredError: if ZAI_API_KEY is missing.
@@ -251,22 +252,8 @@ def generate_image(
             url,
         )
 
-        try:
-            return _download_with_retry(url, timeout=settings.ZAI_IMAGE_TIMEOUT_SECONDS)
-        except GLMImageClientError as exc:
-            last_error = exc
-            if attempt >= MAX_GENERATE_ATTEMPTS or not _is_retryable_asset_error(exc):
-                raise
-            logger.warning(
-                "GLM-Image asset fetch failed (%s). Retrying image generation (%d/%d).",
-                exc,
-                attempt + 1,
-                MAX_GENERATE_ATTEMPTS,
-            )
-            time.sleep(0.5)
-
-    # Defensive: loop should always return or raise before this point.
-    raise last_error or GLMImageClientError("GLM-Image failed without explicit error.")
+        # The user wants the URL directly.
+        return GeneratedImageResult(url=url)
 
 
 def _is_retryable_asset_error(exc: GLMImageClientError) -> bool:
@@ -280,7 +267,7 @@ def _is_retryable_asset_error(exc: GLMImageClientError) -> bool:
 
 
 __all__ = [
-    "GeneratedImageBytes",
+    "GeneratedImageResult",
     "GLMImageClientError",
     "GLMImageNotConfiguredError",
     "PORTRAIT_KEYWORDS",

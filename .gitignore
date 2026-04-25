@@ -24,11 +24,6 @@ build/
 dist/
 *.egg-info/
 
-# --- Environment files ---
-.env
-.env.*
-!.env.example
-
 # --- Node / frontend ---
 node_modules/
 npm-debug.log*
@@ -40,3 +35,15 @@ out/
 dist-ssr/
 coverage/
 
+# --- Environment & Sensitive files ---
+.env
+.env.*
+!.env.example
+firebase-credentials.json
+*.json.bak
+*.json.tmp
+
+# --- App Specific Junk ---
+backend/test_input.csv
+frontend/src/mockData/
+*.log
