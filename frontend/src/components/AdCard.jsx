@@ -8,15 +8,31 @@ const platformColors = {
   Lazada: 'platform--lazada',
 };
 
-export default function AdCard({ platform, format, category, caption, date, onClick }) {
+export default function AdCard({
+  platform,
+  format,
+  category,
+  caption,
+  date,
+  onClick,
+  image,
+  isLive,
+}) {
   return (
     <div className="ad-card" onClick={onClick}>
       <div className="ad-card__header">
         <span className={`ad-card__platform ${platformColors[platform] || ''}`}>{platform}</span>
-        <span className="ad-card__format">{format}</span>
+        <div className="ad-card__header-right">
+          {isLive && <span className="ad-card__live-pill">LIVE</span>}
+          <span className="ad-card__format">{format}</span>
+        </div>
       </div>
       <div className="ad-card__preview">
-        <div className="ad-card__preview-shape" />
+        {image ? (
+          <img src={image} alt={category || 'Generated ad preview'} className="ad-card__preview-image" />
+        ) : (
+          <div className="ad-card__preview-shape" />
+        )}
       </div>
       <div className="ad-card__caption">
         <p className="ad-card__category">{category}</p>

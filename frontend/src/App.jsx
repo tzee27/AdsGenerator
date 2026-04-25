@@ -1,5 +1,7 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
+import JobIndicator from './components/JobIndicator';
+import { JobProvider } from './context/JobContext';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import Main from './pages/Main';
@@ -15,29 +17,33 @@ export default function App() {
   const isAuthPage = AUTH_ROUTES.includes(location.pathname);
 
   return (
-    <div className="app-shell">
-      {/* Background Mesh Elements */}
-      <div className="bg-mesh">
-        <div className="bg-mesh__blob bg-mesh__blob--1"></div>
-        <div className="bg-mesh__blob bg-mesh__blob--2"></div>
-        <div className="bg-mesh__blob bg-mesh__blob--3"></div>
-        <div className="bg-mesh__blob bg-mesh__blob--4"></div>
-        <div className="bg-mesh__blob bg-mesh__blob--5"></div>
+    <JobProvider>
+      <div className="app-shell">
+        {/* Background Mesh Elements */}
+        <div className="bg-mesh">
+          <div className="bg-mesh__blob bg-mesh__blob--1"></div>
+          <div className="bg-mesh__blob bg-mesh__blob--2"></div>
+          <div className="bg-mesh__blob bg-mesh__blob--3"></div>
+          <div className="bg-mesh__blob bg-mesh__blob--4"></div>
+          <div className="bg-mesh__blob bg-mesh__blob--5"></div>
+        </div>
+
+        {!isAuthPage && <Sidebar />}
+
+        <main className={isAuthPage ? 'app-main-full' : 'app-main'}>
+          <Routes>
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/main" element={<Main />} />
+            <Route path="/generate" element={<ContentGeneration />} />
+            <Route path="/database" element={<Database />} />
+            <Route path="/profile" element={<Profile />} />
+          </Routes>
+        </main>
+
+        {!isAuthPage && <JobIndicator />}
       </div>
-
-      {!isAuthPage && <Sidebar />}
-
-      <main className={isAuthPage ? 'app-main-full' : 'app-main'}>
-        <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/main" element={<Main />} />
-          <Route path="/generate" element={<ContentGeneration />} />
-          <Route path="/database" element={<Database />} />
-          <Route path="/profile" element={<Profile />} />
-        </Routes>
-      </main>
-    </div>
+    </JobProvider>
   );
 }

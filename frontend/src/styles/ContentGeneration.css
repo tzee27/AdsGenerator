@@ -547,6 +547,196 @@
   to { transform: rotate(360deg); }
 }
 
+/* Area override input */
+.gen-area-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.gen-area-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.gen-area-input {
+  padding: 14px 18px;
+  font-size: 1.1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  transition: all var(--transition-fast);
+}
+
+.gen-area-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(125, 145, 105, 0.15);
+}
+
+/* Generated image */
+.gen-output-card--image {
+  grid-column: 1 / -1;
+  background-color: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gen-output-image {
+  width: 100%;
+  max-height: 540px;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  background-color: #000;
+  display: block;
+}
+
+.gen-output-card__caption-muted {
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+  line-height: 1.55;
+}
+
+.gen-output-list {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 1.1rem;
+  color: var(--color-text-secondary);
+  line-height: 1.65;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Financial projection grid */
+.gen-finance-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.gen-finance-cell {
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gen-finance-cell__label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.gen-finance-cell__value {
+  font-size: 1.5rem;
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+.gen-finance-summary {
+  font-style: italic;
+  font-size: 1.1rem !important;
+}
+
+/* Risk vs Reward */
+.gen-risk-reward {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.gen-risk-reward__label {
+  display: block;
+  font-size: 1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+.gen-risk-reward__label--risk { color: #b54040; }
+.gen-risk-reward__label--reward { color: #3f7048; }
+
+/* Error banner */
+.gen-error-banner {
+  background-color: #fde8e8;
+  border: 1px solid #f5b5b5;
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  color: #842828;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gen-error-banner__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 1.05rem;
+}
+
+.gen-error-banner__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gen-error-banner__close {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #842828;
+  padding: 0 4px;
+}
+
+.gen-error-banner__parts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.gen-error-banner__part {
+  font-size: 0.85rem;
+  padding: 4px 10px;
+  border-radius: 100px;
+  background-color: rgba(0,0,0,0.04);
+}
+
+.gen-error-banner__part--ok { color: #3f7048; }
+.gen-error-banner__part--fail { color: #b54040; font-weight: 700; }
+
+/* Inline timeline step (replaces the old blocking overlay) */
+.gen-step--timeline {
+  gap: 18px;
+}
+
+.gen-running-cta {
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
 /* Responsive */
 @media (max-width: 700px) {
   .gen-rec-grid {
@@ -557,11 +747,20 @@
     grid-template-columns: 1fr;
   }
 
-  .gen-output-card--guide {
+  .gen-output-card--guide,
+  .gen-output-card--image {
     grid-column: 1;
   }
 
   .gen-review-details {
+    grid-template-columns: 1fr;
+  }
+
+  .gen-finance-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .gen-risk-reward {
     grid-template-columns: 1fr;
   }
 }

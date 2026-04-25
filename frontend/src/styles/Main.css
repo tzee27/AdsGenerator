@@ -473,6 +473,40 @@
   color: var(--color-accent);
 }
 
+.ad-modal__btn-danger {
+  border-color: rgba(181, 64, 64, 0.4);
+  color: #b54040;
+}
+
+.ad-modal__btn-danger:hover {
+  background-color: #fde8e8;
+  border-color: #b54040;
+  color: #842828;
+}
+
+.ad-modal__live-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  padding: 4px 10px;
+  border-radius: 100px;
+  background-color: #d2563f;
+  color: #fcfcf2;
+  margin-left: 12px;
+  vertical-align: middle;
+}
+
+.ad-modal__preview-image {
+  width: 100%;
+  max-height: 480px;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  background-color: #000;
+  display: block;
+}
+
 /* Responsive */
 @media (max-width: 900px) {
   .main-stats {
