@@ -16,8 +16,8 @@ from typing import Optional
 
 from app.schemas.risk import RiskAnalysisResponse, RiskProduct
 
-REQUIRED_COLUMNS = {"product_name", "category", "stock_level", "price", "date_added"}
-OPTIONAL_COLUMNS = {"expiry_date"}
+REQUIRED_COLUMNS = {"product_name", "category", "stock_level", "price"}
+OPTIONAL_COLUMNS = {"date_added", "expiry_date"}
 
 HIGH_RISK_THRESHOLD = 70
 MEDIUM_RISK_THRESHOLD = 40
@@ -46,8 +46,10 @@ class ParsedRow:
 _ParsedRow = ParsedRow
 
 
-def _parse_date(value: str, field: str, row_num: int) -> date:
-    value = (value or "").strip()
+def _parse_date(value, field: str, row_num: int) -> date:
+    if isinstance(value, (datetime, date)):
+        return value if isinstance(value, date) else value.date()
+    value = str(value if value is not None else "").strip()
     if not value:
         raise RiskAnalyserError(f"Row {row_num}: '{field}' is required.")
     
@@ -63,15 +65,19 @@ def _parse_date(value: str, field: str, row_num: int) -> date:
     )
 
 
-def _parse_optional_date(value: str, field: str, row_num: int) -> Optional[date]:
-    value = (value or "").strip()
+def _parse_optional_date(value, field: str, row_num: int) -> Optional[date]:
+    if isinstance(value, (datetime, date)):
+        return value if isinstance(value, date) else value.date()
+    value = str(value if value is not None else "").strip()
     if not value:
         return None
     return _parse_date(value, field, row_num)
 
 
-def _parse_int(value: str, field: str, row_num: int) -> int:
-    value = (value or "").strip()
+def _parse_int(value, field: str, row_num: int) -> int:
+    if isinstance(value, (int, float)):
+        return int(value)
+    value = str(value if value is not None else "").strip()
     if not value:
         raise RiskAnalyserError(f"Row {row_num}: '{field}' is required.")
     try:
@@ -82,8 +88,10 @@ def _parse_int(value: str, field: str, row_num: int) -> int:
         ) from exc
 
 
-def _parse_float(value: str, field: str, row_num: int) -> float:
-    value = (value or "").strip()
+def _parse_float(value, field: str, row_num: int) -> float:
+    if isinstance(value, (int, float)):
+        return float(value)
+    value = str(value if value is not None else "").strip()
     if not value:
         raise RiskAnalyserError(f"Row {row_num}: '{field}' is required.")
     try:
@@ -95,12 +103,7 @@ def _parse_float(value: str, field: str, row_num: int) -> float:
 
 
 def parse_csv(content: str) -> list[ParsedRow]:
-    """Validate columns and coerce rows into typed records.
-
-    Public helper so the orchestrator can read the CSV once and reuse the
-    typed rows for downstream parts (which need category/price), instead of
-    re-parsing the file twice.
-    """
+    """Validate columns and coerce rows into typed records from a CSV string."""
     reader = csv.DictReader(io.StringIO(content))
     if reader.fieldnames is None:
         raise RiskAnalyserError("CSV appears to be empty.")
@@ -113,27 +116,43 @@ def parse_csv(content: str) -> list[ParsedRow]:
             f"Expected at least {sorted(REQUIRED_COLUMNS)}."
         )
 
+    return parse_dicts(list(reader))
+
+
+def parse_dicts(data: list[dict]) -> list[ParsedRow]:
+    """Validate and coerce a list of dictionaries into typed ParsedRow records."""
+    if not data:
+        raise RiskAnalyserError("No product data provided.")
+
+    # Validate headers on the first row
+    first_row = data[0]
+    headers = {str(k).strip() for k in first_row.keys()}
+    missing = REQUIRED_COLUMNS - headers
+    if missing:
+        raise RiskAnalyserError(
+            f"Data is missing required columns: {sorted(missing)}. "
+            f"Expected at least {sorted(REQUIRED_COLUMNS)}."
+        )
+
     rows: list[ParsedRow] = []
-    for i, raw in enumerate(reader, start=2):
-        product = (raw.get("product_name") or "").strip()
+    for i, raw in enumerate(data, start=2):
+        product = str(raw.get("product_name") or "").strip()
         if not product:
             raise RiskAnalyserError(f"Row {i}: 'product_name' is required.")
 
         rows.append(
             ParsedRow(
                 product=product,
-                category=(raw.get("category") or "").strip(),
-                stock_level=_parse_int(raw.get("stock_level", ""), "stock_level", i),
-                price=_parse_float(raw.get("price", ""), "price", i),
-                date_added=_parse_date(raw.get("date_added", ""), "date_added", i),
+                category=str(raw.get("category") or "").strip(),
+                stock_level=_parse_int(raw.get("stock_level"), "stock_level", i),
+                price=_parse_float(raw.get("price"), "price", i),
+                date_added=_parse_optional_date(raw.get("date_added"), "date_added", i) or date.today(),
                 expiry_date=_parse_optional_date(
-                    raw.get("expiry_date", ""), "expiry_date", i
+                    raw.get("expiry_date"), "expiry_date", i
                 ),
             )
         )
 
-    if not rows:
-        raise RiskAnalyserError("CSV contains no product rows.")
     return rows
 
 

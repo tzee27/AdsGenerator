@@ -15,6 +15,8 @@ Status codes:
 from typing import Optional
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status, Depends
+import pandas as pd
+import io
 from app.core.security import get_current_user
 
 from app.schemas.ads import (
@@ -117,10 +119,11 @@ async def strategies(
     ),
     current_user: dict = Depends(get_current_user),
 ) -> StrategiesResponse:
-    if not file.filename or not file.filename.lower().endswith(".csv"):
+    ext = file.filename.lower() if file.filename else ""
+    if not (ext.endswith(".csv") or ext.endswith(".xlsx") or ext.endswith(".xls")):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only .csv files are supported.",
+            detail="Only .csv, .xlsx, and .xls files are supported.",
         )
 
     raw = await file.read()
@@ -131,15 +134,26 @@ async def strategies(
         )
 
     try:
-        content = raw.decode("utf-8-sig")
-    except UnicodeDecodeError as exc:
+        if ext.endswith(".csv"):
+            # Try to read as CSV with pandas to handle encodings/delimiters better
+            df = pd.read_csv(io.BytesIO(raw))
+        else:
+            # Excel (xlsx/xls)
+            df = pd.read_excel(io.BytesIO(raw))
+        
+        # Convert NaN to empty string for consistent parsing
+        df = df.fillna("")
+        data = df.to_dict(orient="records")
+        from app.services.risk_analyser import parse_dicts
+        rows = parse_dicts(data)
+    except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="CSV must be UTF-8 encoded.",
+            detail=f"Failed to parse file: {exc}",
         ) from exc
 
     try:
-        res = run_phase_a(content, area=area, count=count)
+        res = run_phase_a(rows=rows, area=area, count=count)
         return res
     except RiskAnalyserError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc

@@ -126,6 +126,14 @@
   flex: 1;
 }
 
+.ad-card__headline {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
 .ad-card__text {
   font-size: 1.15rem;
   color: var(--color-text-secondary);

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import * as XLSX from "xlsx";
 import StepIndicator from "../components/StepIndicator";
 import RecommendationCard from "../components/RecommendationCard";
 import PipelineTimeline from "../components/PipelineTimeline";
@@ -14,22 +15,93 @@ const STEPS = [
 
 const PREVIEW_ROW_LIMIT = 8;
 
-/** Lightweight client-side CSV preview (first N rows). Backend re-parses for real. */
-function parseCsvPreview(text) {
-  if (!text) return { columns: [], rows: [] };
-  const lines = text.split(/\r?\n/).filter((l) => l.trim());
-  if (lines.length === 0) return { columns: [], rows: [] };
-  const split = (line) => line.split(",").map((c) => c.trim());
-  const columns = split(lines[0]);
-  const rows = lines.slice(1, PREVIEW_ROW_LIMIT + 1).map((line) => {
-    const parts = split(line);
-    const row = {};
-    columns.forEach((col, i) => {
-      row[col] = parts[i] ?? "";
-    });
-    return row;
-  });
-  return { columns, rows, totalRows: lines.length - 1 };
+function isValidDate(value) {
+  if (value === null || value === undefined || value === "") return true;
+  if (value instanceof Date) return !isNaN(value.getTime());
+  const s = String(value).trim();
+  if (!s) return true;
+  const formats = [/^\d{4}-\d{2}-\d{2}$/, /^\d{1,2}\/\d{1,2}\/\d{4}$/, /^\d{4}\/\d{2}\/\d{2}$/];
+  if (formats.some(f => f.test(s))) {
+    const d = new Date(s);
+    return !isNaN(d.getTime());
+  }
+  return false;
+}
+
+function validateRow(row, rowIndex) {
+  const num = rowIndex + 2;
+  if (!row.product_name || !String(row.product_name).trim()) return `Row ${num}: 'product_name' is required.`;
+  if (!row.category || !String(row.category).trim()) return `Row ${num}: 'category' is required.`;
+  if (row.stock_level !== 0 && !row.stock_level) return `Row ${num}: 'stock_level' is required.`;
+  if (isNaN(parseFloat(row.stock_level))) return `Row ${num}: 'stock_level' must be a number (got '${row.stock_level}').`;
+  if (row.price !== 0 && !row.price) return `Row ${num}: 'price' is required.`;
+  if (isNaN(parseFloat(row.price))) return `Row ${num}: 'price' must be a number (got '${row.price}').`;
+  if (row.date_added && !isValidDate(row.date_added)) return `Row ${num}: 'date_added' must be a valid date (got '${row.date_added}').`;
+  if (row.expiry_date && !isValidDate(row.expiry_date)) return `Row ${num}: 'expiry_date' must be a valid date (got '${row.expiry_date}').`;
+  return null;
+}
+const REQUIRED_COLUMNS = [
+  "product_name",
+  "category",
+  "stock_level",
+  "price",
+];
+
+/** Lightweight client-side preview (first N rows). Backend re-parses for real. */
+function processFile(file, onProgress, onComplete) {
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      if (!jsonData || jsonData.length === 0) {
+        onComplete({ columns: [], rows: [], totalRows: 0, error: "File is empty." });
+        return;
+      }
+      const columns = jsonData[0].map(c => String(c || "").trim());
+      const headersLower = columns.map(c => c.toLowerCase());
+      const missing = REQUIRED_COLUMNS.filter(req => !headersLower.includes(req.toLowerCase()));
+      if (missing.length > 0) {
+        onComplete({ columns, rows: [], totalRows: 0, error: `Missing required columns: ${missing.join(", ")}` });
+        return;
+      }
+      const allRows = jsonData.slice(1);
+      const total = allRows.length;
+      for (let i = 0; i < total; i++) {
+        const rowArr = allRows[i];
+        if (!rowArr || rowArr.length === 0) continue;
+        const row = {};
+        columns.forEach((col, j) => {
+          // Normalize key for validation
+          row[col.toLowerCase()] = rowArr[j];
+          // Preserve original key for preview
+          row[col] = rowArr[j];
+        });
+        const error = validateRow(row, i);
+        if (error) {
+          onComplete({ columns, rows: [], totalRows: total, error });
+          return;
+        }
+        if (total > 0 && i % 20 === 0) {
+          onProgress(Math.round((i / total) * 100));
+          await new Promise(r => setTimeout(r, 0));
+        }
+      }
+      const previewRows = allRows.slice(0, PREVIEW_ROW_LIMIT).map(rowArr => {
+        const row = {};
+        columns.forEach((col, j) => { row[col] = rowArr[j] ?? ""; });
+        return row;
+      });
+      onProgress(100);
+      onComplete({ columns, rows: previewRows, totalRows: total });
+    } catch (err) {
+      console.error("File process error:", err);
+      onComplete({ columns: [], rows: [], totalRows: 0, error: "Failed to read file." });
+    }
+  };
+  reader.readAsArrayBuffer(file);
 }
 
 function ErrorBanner({ error, onDismiss, onRetry, retryLabel }) {
@@ -108,11 +180,15 @@ export default function ContentGeneration() {
     columns: [],
     rows: [],
     totalRows: 0,
+    missingColumns: [],
   });
   const [dragOver, setDragOver] = useState(false);
   const [areaOverride, setAreaOverride] = useState("");
   const [reviewMode, setReviewMode] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
+  const [validationError, setValidationError] = useState(null);
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationProgress, setValidationProgress] = useState(0);
   const fileInputRef = useRef(null);
 
   // Clear the indicator's "done" pill when the user lands here.
@@ -136,15 +212,32 @@ export default function ContentGeneration() {
 
   /* ----------------------------- file handling ---------------------------- */
 
-  const ingestFile = async (file) => {
+  const ingestFile = (file) => {
     if (!file) return;
     setUploadedFile(file);
-    try {
-      const text = await file.text();
-      setCsvPreview(parseCsvPreview(text));
-    } catch {
-      setCsvPreview({ columns: [], rows: [], totalRows: 0 });
-    }
+    setValidationError(null);
+    setIsValidating(true);
+    setValidationProgress(0);
+
+    processFile(
+      file,
+      (progress) => setValidationProgress(progress),
+      (result) => {
+        setIsValidating(false);
+        if (result.error) {
+          setValidationError(result.error);
+          setCsvPreview({ columns: [], rows: [], totalRows: 0, missingColumns: [] });
+        } else {
+          setCsvPreview({
+            columns: result.columns,
+            rows: result.rows,
+            totalRows: result.totalRows,
+            missingColumns: []
+          });
+          setValidationError(null);
+        }
+      }
+    );
   };
 
   const handleFileDrop = (e) => {
@@ -183,7 +276,7 @@ export default function ContentGeneration() {
   const handleReset = () => {
     reset();
     setUploadedFile(null);
-    setCsvPreview({ columns: [], rows: [], totalRows: 0 });
+    setCsvPreview({ columns: [], rows: [], totalRows: 0, missingColumns: [] });
     setAreaOverride("");
     setReviewMode(false);
   };
@@ -287,10 +380,15 @@ export default function ContentGeneration() {
         <StepIndicator steps={STEPS} currentStep={indicatorStep} />
 
         <ErrorBanner
-          error={error}
-          onDismiss={dismissError}
+          error={validationError ? { message: validationError } : error}
+          onDismiss={validationError ? () => {
+            setValidationError(null);
+            setUploadedFile(null);
+            setCsvPreview({ columns: [], rows: [], totalRows: 0, missingColumns: [] });
+            if (fileInputRef.current) fileInputRef.current.value = "";
+          } : dismissError}
           onRetry={
-            (isPhaseAError && uploadedFile) || isPhaseBError
+            !validationError && ((isPhaseAError && uploadedFile) || isPhaseBError)
               ? handleRetry
               : null
           }
@@ -324,7 +422,7 @@ export default function ContentGeneration() {
             <div className="gen-section-header">
               <h2>Upload Product Inventory</h2>
               <p>
-                Upload a CSV file with your product names, stock levels,
+                Upload a CSV or Excel file (.xlsx, .xls) with your product names, stock levels,
                 categories, and pricing. GLM will read and analyse your data.
               </p>
             </div>
@@ -342,7 +440,7 @@ export default function ContentGeneration() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".csv"
+                accept=".csv,.xlsx,.xls"
                 style={{ display: "none" }}
                 onChange={handleFileSelect}
               />
@@ -369,29 +467,58 @@ export default function ContentGeneration() {
                 </div>
               ) : (
                 <>
-                  <p className="gen-dropzone__main">Drop your CSV file here</p>
+                  <p className="gen-dropzone__main">Drop your file here</p>
                   <p className="gen-dropzone__sub">
-                    or click to browse — CSV format, max 5 MB
+                    or click to browse — CSV or Excel format, max 5 MB
                   </p>
                 </>
               )}
             </div>
 
+            {isValidating && (
+              <div className="gen-validation-loader">
+                <div className="gen-validation-loader__text">
+                  <span>Validating inventory data...</span>
+                  <span>{validationProgress}%</span>
+                </div>
+                <div className="gen-validation-loader__bar-bg">
+                  <div 
+                    className="gen-validation-loader__bar-fill" 
+                    style={{ width: `${validationProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {csvPreview.missingColumns.length > 0 && (
+              <div className="gen-error-banner" style={{ marginBottom: '1.5rem', borderRadius: '12px' }}>
+                <div className="gen-error-banner__head">
+                  <strong>Missing Required Columns</strong>
+                </div>
+                <p style={{ marginTop: '0.5rem', fontSize: '0.9rem', opacity: 0.9 }}>
+                  Your file is missing: {csvPreview.missingColumns.join(", ")}.
+                  Please check the expected format below.
+                </p>
+              </div>
+            )}
+
             <div className="gen-csv-hint">
               <div className="gen-csv-hint__label">Expected columns:</div>
               <div className="gen-csv-hint__cols">
-                {[
-                  "product_name",
-                  "category",
-                  "stock_level",
-                  "price",
-                  "date_added",
-                  "expiry_date",
-                ].map((c) => (
-                  <span key={c} className="gen-csv-col">
-                    {c}
-                  </span>
-                ))}
+                {REQUIRED_COLUMNS.map((c) => {
+                  const isMissing = (csvPreview.missingColumns || []).includes(c);
+                  return (
+                    <span
+                      key={c}
+                      className={`gen-csv-col ${isMissing ? 'gen-csv-col--missing' : ''}`}
+                      title={isMissing ? 'This column is missing from your file' : 'Correct'}
+                    >
+                      {c} {isMissing && '✕'}
+                    </span>
+                  );
+                })}
+                <span className="gen-csv-col gen-csv-col--optional">date_added (opt)</span>
+                <span className="gen-csv-col gen-csv-col--optional">expiry_date (opt)</span>
               </div>
             </div>
 
@@ -445,7 +572,7 @@ export default function ContentGeneration() {
               <button
                 className="btn btn-primary btn-lg"
                 onClick={handleAnalyse}
-                disabled={!uploadedFile}
+                disabled={!uploadedFile || !!validationError}
               >
                 Analyse Inventory
                 <svg

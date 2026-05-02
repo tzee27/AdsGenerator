@@ -13,6 +13,7 @@ export default function AdCard({
   format,
   category,
   caption,
+  headline,
   date,
   onClick,
   image,
@@ -36,6 +37,7 @@ export default function AdCard({
       </div>
       <div className="ad-card__caption">
         <p className="ad-card__category">{category}</p>
+        {headline && <p className="ad-card__headline">{headline}</p>}
         <p className="ad-card__text">{caption}</p>
       </div>
       {date && <div className="ad-card__date">{date}</div>}

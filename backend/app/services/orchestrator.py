@@ -158,17 +158,19 @@ def _enrich_strategies_with_categories(
 
 
 def run_phase_a(
-    csv_content: str,
+    csv_content: Optional[str] = None,
     *,
+    rows: Optional[list[ParsedRow]] = None,
     area: Optional[str] = None,
     today: Optional[date] = None,
     count: int = 2,
     glm_fn: Optional[GlmCallable] = None,
 ) -> StrategiesResponse:
-    """Run Parts 1-3 against an inventory CSV.
+    """Run Parts 1-3 against an inventory CSV or pre-parsed rows.
 
     Args:
-        csv_content: Raw CSV string (already decoded as UTF-8).
+        csv_content: Optional. Raw CSV string (already decoded as UTF-8).
+        rows: Optional. Pre-parsed inventory rows (useful for Excel support).
         area: Override target region; falls back to `settings.AREA`.
         today: Override reference date.
         count: How many strategy options to generate (1-5, clamped).
@@ -186,7 +188,11 @@ def run_phase_a(
 
     # Part 1 — risk
     t0 = time.perf_counter()
-    rows = parse_csv(csv_content)
+    if rows is None:
+        if csv_content is None:
+            raise ValueError("Either csv_content or rows must be provided.")
+        rows = parse_csv(csv_content)
+    
     risk = analyse_rows(rows, today=reference_date)
     timing_ms["risk"] = _ms_since(t0)
     completed["risk"] = True

@@ -96,7 +96,9 @@ export function JobProvider({ children }) {
   }, []);
 
   const dismissError = useCallback(() => {
-    setState((prev) => (prev.error ? { ...prev, error: null } : prev));
+    setState((prev) =>
+      prev.error ? { ...prev, error: null, status: prev.status === "error" ? "idle" : prev.status } : prev,
+    );
   }, []);
 
   /* ------------------------------- Phase A ------------------------------- */

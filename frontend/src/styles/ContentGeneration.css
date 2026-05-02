@@ -764,3 +764,36 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Validation Loader */
+.gen-validation-loader {
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 32px;
+  animation: fadeSlideIn 0.3s ease;
+}
+
+.gen-validation-loader__text {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.gen-validation-loader__bar-bg {
+  width: 100%;
+  height: 10px;
+  background-color: var(--color-gray-light);
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.gen-validation-loader__bar-fill {
+  height: 100%;
+  background-color: var(--color-accent);
+  transition: width 0.1s ease;
+}
