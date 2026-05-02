@@ -109,6 +109,21 @@ def test_generate_content_happy_path() -> None:
     assert captured_image_call["kwargs"]["format_hint"] == "Short Video"
 
 
+def test_generate_content_three_copy_variants_are_distinct() -> None:
+    """Model returned three variants — each headline must differ (real multi-hook output)."""
+    result = generate_content(
+        SAMPLE_STRATEGY,
+        product=SAMPLE_PRODUCT,
+        area="Kuala Lumpur",
+        today=date(2026, 4, 25),
+        glm_fn=lambda m, **k: GOOD_GLM_RESPONSE,
+        image_fn=_fake_image,
+    )
+    headlines = [v.headline for v in result.content_variants]
+    assert len(headlines) == 3
+    assert len(set(headlines)) == 3
+
+
 def test_pads_when_model_returns_fewer_than_three_variants() -> None:
     response = {
         "content_variants": [GOOD_GLM_RESPONSE["content_variants"][0]],
