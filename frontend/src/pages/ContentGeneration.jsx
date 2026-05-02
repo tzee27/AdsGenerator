@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import StepIndicator from "../components/StepIndicator";
 import RecommendationCard from "../components/RecommendationCard";
+import GeoTargetingCard from "../components/GeoTargetingCard";
 import PipelineTimeline from "../components/PipelineTimeline";
 import { useJob } from "../context/jobHooks";
 import { ApiError, regenerateSections } from "../lib/api";
@@ -333,6 +334,21 @@ export default function ContentGeneration() {
       imagePrompt: displayResult.content?.image_prompt || "",
     };
   }, [displayResult, phaseAResponse, selectedIdx]);
+
+  const selectedGeoRecommendation = useMemo(() => {
+    if (!phaseAResponse || selectedIdx == null) return null;
+    const selectedProduct =
+      phaseAResponse.strategies?.[selectedIdx]?.featured_product?.product;
+    if (!selectedProduct) return null;
+    const geoMap = phaseAResponse.metadata?.geo_targeting || {};
+    const geoEntry = geoMap[selectedProduct];
+    if (!geoEntry || typeof geoEntry !== "object") return null;
+    return {
+      success: Boolean(geoEntry.success),
+      source: geoEntry.source || "unknown",
+      data: geoEntry.data || {},
+    };
+  }, [phaseAResponse, selectedIdx]);
 
   /* ----------------------------- view flags ----------------------------- */
 
@@ -768,6 +784,7 @@ export default function ContentGeneration() {
                     </svg>
                   </button>
                 </div>
+
               </div>
             );
           })()}
@@ -963,31 +980,52 @@ export default function ContentGeneration() {
                       Financial Projection
                     </span>
                   </div>
+                  {(() => {
+                    const finance = generated.explanation.financial_projection;
+                    const durationLabel =
+                      finance.forecast_window_label ||
+                      `${finance.forecast_duration_days || 1} day${
+                        (finance.forecast_duration_days || 1) === 1 ? "" : "s"
+                      }`;
+                    return (
                   <div className="gen-finance-grid">
                     {[
+                      ["Forecast Window", durationLabel],
                       [
-                        "Spend",
-                        `RM ${generated.explanation.financial_projection.spend_rm.toFixed(0)}`,
+                        "Total Spend",
+                        `RM ${(finance.total_spend_rm ?? finance.spend_rm).toFixed(0)}`,
                       ],
                       [
-                        "Reach",
-                        generated.explanation.financial_projection.predicted_reach.toLocaleString(),
+                        "Total Reach",
+                        (
+                          finance.total_predicted_reach ??
+                          finance.predicted_reach
+                        ).toLocaleString(),
                       ],
                       [
-                        "Clicks",
-                        generated.explanation.financial_projection.predicted_clicks.toLocaleString(),
+                        "Total Clicks",
+                        (
+                          finance.total_predicted_clicks ??
+                          finance.predicted_clicks
+                        ).toLocaleString(),
                       ],
                       [
-                        "Sales",
-                        generated.explanation.financial_projection.predicted_sales.toLocaleString(),
+                        "Total Sales",
+                        (
+                          finance.total_predicted_sales ??
+                          finance.predicted_sales
+                        ).toLocaleString(),
                       ],
                       [
-                        "Revenue",
-                        `RM ${generated.explanation.financial_projection.predicted_revenue_rm.toFixed(0)}`,
+                        "Total Revenue",
+                        `RM ${(
+                          finance.total_predicted_revenue_rm ??
+                          finance.predicted_revenue_rm
+                        ).toFixed(0)}`,
                       ],
                       [
                         "ROI",
-                        `${generated.explanation.financial_projection.roi_percent.toFixed(0)}%`,
+                        `${finance.roi_percent.toFixed(0)}%`,
                       ],
                     ].map(([label, value]) => (
                       <div key={label} className="gen-finance-cell">
@@ -996,6 +1034,8 @@ export default function ContentGeneration() {
                       </div>
                     ))}
                   </div>
+                    );
+                  })()}
                   <p className="gen-output-card__text gen-finance-summary">
                     {generated.explanation.financial_projection.summary_line}
                   </p>
@@ -1044,6 +1084,16 @@ export default function ContentGeneration() {
                 </div>
               )}
             </div>
+
+            {selectedGeoRecommendation && (
+              <GeoTargetingCard
+                productName={generated?.product || "Selected product"}
+                storeLocation={phaseAResponse?.metadata?.area || "Malaysia"}
+                recommendation={selectedGeoRecommendation}
+                isLoading={false}
+                onRetry={handleAnalyse}
+              />
+            )}
 
             <div className="gen-step-actions gen-step-actions--split">
               <button className="btn btn-ghost" onClick={handleReset}>

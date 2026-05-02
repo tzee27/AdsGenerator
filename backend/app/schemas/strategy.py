@@ -19,6 +19,12 @@ class AdStrategy(BaseModel):
     angle: str = Field(description="Creative hook / angle, e.g. 'Raya gift idea'")
     predicted_reach: int = Field(ge=0, description="Estimated people reached")
     predicted_roi: str = Field(description="ROI as percent string, e.g. '1850%'")
+    forecast_window_months: int = Field(
+        default=1,
+        ge=1,
+        le=1,
+        description="Forecast window in months (fixed to 1 month).",
+    )
 
 
 class StrategyOption(BaseModel):

@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import time
 from datetime import date, datetime, timezone
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Callable, Optional
 
 from app.core.config import settings
@@ -43,6 +44,7 @@ from app.services.content_generator import (
 from app.services.context_gatherer import gather_live_context
 from app.services.explanation_generator import compute_financial_projection
 from app.services.explanation_generator import generate_explanation
+from app.services.geo_targeting import build_geo_context, get_geo_targeting
 from app.services.risk_analyser import (
     ParsedRow,
     RiskAnalyserError,
@@ -57,6 +59,7 @@ PIPELINE_PARTS = PHASE_A_PARTS + PHASE_B_PARTS
 
 # Hard cap on how many products we hand to the live-context gatherer.
 MAX_CONTEXT_PRODUCTS = 8
+MAX_GEO_PRODUCTS = 4
 
 
 GlmCallable = Callable[..., dict]
@@ -220,6 +223,45 @@ def run_phase_a(
     timing_ms["context"] = _ms_since(t1)
     completed["context"] = True
 
+    # Geo targeting enrichment (parallel per product, non-fatal).
+    geo_catalog: dict[str, dict] = {}
+    geo_context_text: Optional[str] = None
+    geo_products = context_products[:MAX_GEO_PRODUCTS]
+    if geo_products:
+        geo_results: list[dict[str, object]] = []
+        with ThreadPoolExecutor(max_workers=min(4, len(geo_products))) as pool:
+            futures = {
+                pool.submit(
+                    get_geo_targeting,
+                    product_name=p.product,
+                    product_category=p.category or "General",
+                    store_location=effective_area,
+                    primary_customers="Mixed",
+                ): p
+                for p in geo_products
+            }
+            for future in as_completed(futures):
+                product = futures[future]
+                try:
+                    geo = future.result()
+                except Exception:
+                    continue
+                geo_catalog[product.product] = {
+                    "success": geo.success,
+                    "source": geo.source,
+                    "data": geo.data,
+                }
+                if geo.success and isinstance(geo.data, dict):
+                    geo_results.append(
+                        {
+                            "product": product.product,
+                            "source": geo.source,
+                            "geo": geo.data,
+                        }
+                    )
+        if geo_results:
+            geo_context_text = build_geo_context(geo_results)
+
     # Part 3 — strategies (now plural)
     price_lookup = {row.product.strip().lower(): row.price for row in rows}
     t2 = time.perf_counter()
@@ -232,6 +274,7 @@ def run_phase_a(
             count=count,
             glm_fn=glm_fn,
             unit_price_lookup=price_lookup,
+            geo_context=geo_context_text,
         )
     except Exception as exc:
         raise OrchestratorError(
@@ -251,6 +294,7 @@ def run_phase_a(
         area=effective_area,
         timing_ms=timing_ms,
         generated_at=_now_iso_z(),
+        geo_targeting=geo_catalog,
     )
 
     return StrategiesResponse(

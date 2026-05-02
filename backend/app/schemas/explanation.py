@@ -34,6 +34,25 @@ class FinancialProjection(BaseModel):
     average_order_value_rm: float
     predicted_revenue_rm: float
     roi_percent: float
+    forecast_duration_days: int = Field(
+        ge=1, description="Forecast duration parsed from strategy timing."
+    )
+    forecast_window_label: str = Field(
+        description="Human-friendly forecast window, e.g. '5 days'."
+    )
+    total_spend_rm: float = Field(description="Total projected spend across duration.")
+    total_predicted_reach: int = Field(
+        description="Total projected reach across duration."
+    )
+    total_predicted_clicks: int = Field(
+        description="Total projected clicks across duration."
+    )
+    total_predicted_sales: int = Field(
+        description="Total projected sales across duration."
+    )
+    total_predicted_revenue_rm: float = Field(
+        description="Total projected revenue across duration."
+    )
     summary_line: str = Field(
         description="One-line human summary, e.g. 'Spend RM80 → 4,200 reach → ...'."
     )

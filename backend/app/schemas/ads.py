@@ -32,6 +32,10 @@ class StrategiesMetadata(BaseModel):
     area: str
     timing_ms: dict[str, int] = Field(default_factory=dict)
     generated_at: str
+    geo_targeting: dict[str, dict] = Field(
+        default_factory=dict,
+        description="Per-product geo targeting recommendations gathered via live web search.",
+    )
 
 
 class StrategiesResponse(BaseModel):
