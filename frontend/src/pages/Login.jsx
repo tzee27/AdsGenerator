@@ -47,7 +47,7 @@ export default function Login() {
                 <path d="M2 12l10 5 10-5" />
               </svg>
             </div>
-            <h1 className="auth-brand__name">AdPilot</h1>
+            <h1 className="auth-brand__name">AdKedai</h1>
             <p className="auth-brand__tagline">
               AI-powered advertising decisions, built for e-commerce sellers.
             </p>
@@ -83,7 +83,7 @@ export default function Login() {
         <div className="auth-panel auth-panel--form">
           <div className="auth-form-header">
             <p className="auth-form-header__label">Welcome back</p>
-            <h2>Sign in to AdPilot</h2>
+            <h2>Sign in to AdKedai</h2>
             {error && (
               <div
                 className="auth-error"
@@ -148,7 +148,7 @@ export default function Login() {
           </form>
 
           <div className="auth-divider">
-            <span>New to AdPilot?</span>
+            <span>New to AdKedai?</span>
           </div>
 
           <Link

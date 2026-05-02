@@ -70,7 +70,7 @@ export default function SignUp() {
                 <path d="M2 12l10 5 10-5" />
               </svg>
             </div>
-            <h1 className="auth-brand__name">AdPilot</h1>
+            <h1 className="auth-brand__name">AdKedai</h1>
             <p className="auth-brand__tagline">
               Join thousands of sellers making smarter ad decisions.
             </p>

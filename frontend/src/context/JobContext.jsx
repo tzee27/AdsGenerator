@@ -114,7 +114,12 @@ export function JobProvider({ children }) {
 
   const syncFinalResultToHistory = useCallback(
     async (result) => {
-      if (!result || !currentUser || !state.phaseAResponse || state.selectedIdx == null) {
+      if (
+        !result ||
+        !currentUser ||
+        !state.phaseAResponse ||
+        state.selectedIdx == null
+      ) {
         return;
       }
       const selected = state.phaseAResponse.strategies?.[state.selectedIdx];
@@ -140,7 +145,12 @@ export function JobProvider({ children }) {
           : { ...prev, historyEntryId: saved?.id || null },
       );
     },
-    [currentUser, state.historyEntryId, state.phaseAResponse, state.selectedIdx],
+    [
+      currentUser,
+      state.historyEntryId,
+      state.phaseAResponse,
+      state.selectedIdx,
+    ],
   );
 
   /* ------------------------------- Phase A ------------------------------- */

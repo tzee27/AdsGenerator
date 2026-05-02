@@ -238,7 +238,8 @@ export default function ContentGeneration() {
 
   const handleRegenerateSelected = async () => {
     const currentResult = displayResult || finalResult;
-    if (!currentResult || !phaseAResponse || selectedIdx == null || regenBusy) return;
+    if (!currentResult || !phaseAResponse || selectedIdx == null || regenBusy)
+      return;
     if (!regenSections.length) {
       setRegenError("Select at least one section to regenerate.");
       return;
@@ -820,7 +821,9 @@ export default function ContentGeneration() {
                   onClick={handleRegenerateSelected}
                   disabled={regenBusy}
                 >
-                  {regenBusy ? "Regenerating..." : "Regenerate Selected Sections"}
+                  {regenBusy
+                    ? "Regenerating..."
+                    : "Regenerate Selected Sections"}
                 </button>
               </div>
             </div>
