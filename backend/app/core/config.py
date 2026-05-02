@@ -38,10 +38,18 @@ class Settings(BaseSettings):
         "http://localhost:5173,http://127.0.0.1:5173,"
         "http://localhost:4173,http://127.0.0.1:4173"
     )
+    # Optional regex so Vercel preview URLs (changing hostnames) still match, e.g.:
+    # https://.*\\.vercel\\.app
+    CORS_ALLOW_ORIGIN_REGEX: str = ""
 
     @property
     def cors_origins(self) -> list[str]:
         return [o.strip() for o in self.CORS_ALLOW_ORIGINS.split(",") if o.strip()]
+
+    @property
+    def cors_allow_origin_regex(self) -> str | None:
+        r = (self.CORS_ALLOW_ORIGIN_REGEX or "").strip()
+        return r if r else None
 
     @property
     def zai_api_key_resolved(self) -> str:

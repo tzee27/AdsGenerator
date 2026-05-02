@@ -8,9 +8,31 @@
 
 import { auth } from "./firebase";
 
-const API_BASE = (
-  import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1"
-).replace(/\/+$/, "");
+/**
+ * Render (and most hosts) redirect HTTP → HTTPS. Browsers often follow 301/302
+ * with GET, which turns a POST into GET and yields 405 on POST-only routes.
+ * Use HTTPS for any non-local API host.
+ */
+function normalizeApiBase(raw) {
+  const trimmed = String(raw || "")
+    .trim()
+    .replace(/\/+$/, "");
+  if (!trimmed) return "http://localhost:8000/api/v1".replace(/\/+$/, "");
+  try {
+    const u = new URL(trimmed);
+    const local = u.hostname === "localhost" || u.hostname === "127.0.0.1";
+    if (u.protocol === "http:" && !local) {
+      u.protocol = "https:";
+    }
+    return u.toString().replace(/\/+$/, "");
+  } catch {
+    return trimmed;
+  }
+}
+
+const API_BASE = normalizeApiBase(
+  import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1",
+);
 
 /** Custom error carrying HTTP status + parsed backend detail (string or object). */
 export class ApiError extends Error {
