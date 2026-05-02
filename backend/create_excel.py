@@ -1,0 +1,20 @@
+import pandas as pd
+from io import StringIO
+
+data = """product_name,category,stock_level,price,date_added,expiry_date
+Nestle Milo Activ-Go 1kg Refill Pack,Groceries,500,19.9,5/2/2026,30/8/2026
+Maggi 2-Minute Curry Noodles 5-Pack,Groceries,150,8.9,20/1/2026,15/10/2026
+Dutch Lady Full Cream UHT Milk 1L,Groceries,140,7.8,12/3/2026,28/5/2026
+Farm Fresh Fresh Milk 1L,Groceries,90,8.5,1/4/2026,5/5/2026
+Ayam Brand Sardines in Tomato Sauce 425g,Groceries,110,9.2,27/2/2026,1/2/2027
+Kimball Spaghetti Pasta 400g,Groceries,210,4.6,30/1/2026,20/1/2027
+Jasmine Super 5 Rice 5kg,Groceries,70,33.9,3/3/2026,31/12/2027
+Adabi Chicken Curry Powder 250g,Groceries,130,6.4,14/2/2026,10/6/2027
+Quaker Instant Oatmeal 800g,Groceries,95,14.5,22/2/2026,12/11/2026
+Gardenia Original Classic Bread 400g,Groceries,160,3.4,22/4/2026,29/4/2026
+RotiBoy Coffee Bun 6-Pack Frozen,Groceries,55,12.9,25/3/2026,2/5/2026
+Julie’s Peanut Butter Sandwich Biscuits 360g,Groceries,190,7.2,18/1/2026,20/12/2026"""
+
+df = pd.read_csv(StringIO(data))
+df.to_excel('../inventory_groceries.xlsx', index=False)
+print("Created inventory_groceries.xlsx in root directory.")
