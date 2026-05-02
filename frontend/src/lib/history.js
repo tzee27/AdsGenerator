@@ -6,7 +6,16 @@
  * everything (variants, image, explanation) on demand.
  */
 
-import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
+import {
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  doc,
+  query,
+  orderBy,
+  updateDoc,
+} from 'firebase/firestore';
 import { db } from './firebase';
 
 const MAX_ENTRIES = 50;
@@ -81,6 +90,22 @@ export async function saveGeneratedAd(userId, payload) {
     return { id: docRef.id, ...dataToSave };
   } catch (e) {
     console.error("Failed to save ad:", e);
+    throw e;
+  }
+}
+
+export async function updateGeneratedAd(userId, adId, payload) {
+  if (!userId || !adId) throw new Error("User ID and ad ID are required.");
+  const entry = buildEntry(payload);
+  const { id, ...dataToSave } = entry;
+  try {
+    await updateDoc(doc(db, 'users', userId, 'savedAds', adId), {
+      ...dataToSave,
+      updatedAt: new Date().toISOString(),
+    });
+    return { id: adId, ...dataToSave };
+  } catch (e) {
+    console.error("Failed to update ad:", e);
     throw e;
   }
 }

@@ -15,7 +15,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiError, fetchStrategies, finalizeStrategy } from "../lib/api";
-import { saveGeneratedAd } from "../lib/history";
+import { saveGeneratedAd, updateGeneratedAd } from "../lib/history";
 import {
   FIRST_B_INDEX,
   PIPELINE_STEPS,
@@ -33,6 +33,7 @@ const initialState = {
   area: null,
   phaseAResponse: null,
   selectedIdx: null,
+  historyEntryId: null,
   finalResult: null,
   error: null,
   notification: null, // 'phase_a_done' | 'phase_b_done' (shown by indicator until acknowledged)
@@ -110,6 +111,37 @@ export function JobProvider({ children }) {
       error: null,
     }));
   }, []);
+
+  const syncFinalResultToHistory = useCallback(
+    async (result) => {
+      if (!result || !currentUser || !state.phaseAResponse || state.selectedIdx == null) {
+        return;
+      }
+      const selected = state.phaseAResponse.strategies?.[state.selectedIdx];
+      if (!selected) return;
+
+      if (state.historyEntryId) {
+        await updateGeneratedAd(currentUser.uid, state.historyEntryId, {
+          phaseAResponse: state.phaseAResponse,
+          selectedStrategy: selected,
+          finalizeResponse: result,
+        });
+        return;
+      }
+
+      const saved = await saveGeneratedAd(currentUser.uid, {
+        phaseAResponse: state.phaseAResponse,
+        selectedStrategy: selected,
+        finalizeResponse: result,
+      });
+      setState((prev) =>
+        prev.historyEntryId
+          ? prev
+          : { ...prev, historyEntryId: saved?.id || null },
+      );
+    },
+    [currentUser, state.historyEntryId, state.phaseAResponse, state.selectedIdx],
+  );
 
   /* ------------------------------- Phase A ------------------------------- */
 
@@ -219,11 +251,12 @@ export function JobProvider({ children }) {
       });
       stopTimer();
       if (currentUser) {
-        await saveGeneratedAd(currentUser.uid, {
+        const saved = await saveGeneratedAd(currentUser.uid, {
           phaseAResponse: phaseA,
           selectedStrategy: selected,
           finalizeResponse: data,
         });
+        setState((prev) => ({ ...prev, historyEntryId: saved?.id || null }));
       }
       setState((prev) => ({
         ...prev,
@@ -271,6 +304,7 @@ export function JobProvider({ children }) {
         dismissNotification,
         dismissError,
         applyFinalResult,
+        syncFinalResultToHistory,
       },
     }),
     [
@@ -282,6 +316,7 @@ export function JobProvider({ children }) {
       dismissNotification,
       dismissError,
       applyFinalResult,
+      syncFinalResultToHistory,
     ],
   );
 

@@ -111,6 +111,7 @@ export default function ContentGeneration() {
     dismissError,
     dismissNotification,
     applyFinalResult,
+    syncFinalResultToHistory,
   } = job.actions;
 
   // Local UI-only state (file/preview/copy state — not part of the pipeline).
@@ -264,6 +265,8 @@ export default function ContentGeneration() {
       });
       setDisplayResult(data);
       applyFinalResult(data);
+      setRegenSections([]);
+      await syncFinalResultToHistory(data);
       setRegenInstruction("");
     } catch (err) {
       const apiErr =

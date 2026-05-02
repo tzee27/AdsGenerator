@@ -35,7 +35,11 @@ from app.schemas.risk import RiskAnalysisResponse, RiskProduct
 from app.schemas.strategy import StrategyOption
 from app.services import glm_client as _glm
 from app.services import glm_image_client as _image
-from app.services.content_generator import _coerce_payload, generate_content
+from app.services.content_generator import (
+    _coerce_hashtags,
+    _coerce_payload,
+    generate_content,
+)
 from app.services.context_gatherer import gather_live_context
 from app.services.explanation_generator import compute_financial_projection
 from app.services.explanation_generator import generate_explanation
@@ -390,12 +394,33 @@ def run_phase_b_regenerate_sections(
     call_image: ImageCallable = image_fn or _image.generate_image
 
     if {"ad_copy", "captions", "hashtags"} & selected_set:
+        current_variant = (
+            current.content.content_variants[0]
+            if current.content.content_variants
+            else None
+        )
+        if current_variant is None:
+            raise OrchestratorError(
+                failed_part="content",
+                original=ValueError("Current content has no variant to refine."),
+                completed={"content": False, "explanation": False},
+                featured_product=featured,
+                area=effective_area,
+            )
+        requested_fields: list[str] = []
+        if "ad_copy" in selected_set:
+            requested_fields.extend(["headline", "caption", "call_to_action"])
+        if "captions" in selected_set and "caption" not in requested_fields:
+            requested_fields.append("caption")
+        if "hashtags" in selected_set:
+            requested_fields.append("hashtags")
+
         copy_messages = [
             {
                 "role": "system",
                 "content": (
-                    "You rewrite ad copy variants. Return JSON only with this shape: "
-                    '{"content_variants":[{"headline":"...","caption":"...","call_to_action":"...","hashtags":["#Tag"]}]}.'
+                    "You rewrite selected ad-copy fields only. Return JSON only with this shape: "
+                    '{"variant":{"headline":"...","caption":"...","call_to_action":"...","hashtags":["#Tag"]}}'
                 ),
             },
             {
@@ -406,23 +431,37 @@ def run_phase_b_regenerate_sections(
                     f"Audience: {selected.strategy.audience}. Pricing: {selected.strategy.pricing}. "
                     f"Angle: {selected.strategy.angle}.\n"
                     f"Featured product: {featured.product}.\n"
-                    f"Current variants JSON: {current.content.content_variants}\n"
+                    f"Current variant JSON: {current_variant.model_dump()}\n"
+                    f"Selected fields to regenerate: {', '.join(requested_fields)}\n"
                     f"User instruction: {instruction}\n"
-                    "Keep unrequested qualities stable while improving the requested intent. "
-                    "Produce exactly 1 variant."
+                    "Important: modify only selected fields. Keep all unselected fields unchanged. "
+                    "For hashtags, output an array of hashtag strings."
                 ),
             },
         ]
         try:
             raw_copy = call_glm(copy_messages, enable_web_search=False, temperature=0.7)
-            variants, _ = _coerce_payload(
-                {
-                    "content_variants": raw_copy.get("content_variants")
-                    or raw_copy.get("variants"),
-                    "image_prompt": current.content.image_prompt,
-                }
-            )
-            updated.content.content_variants = variants
+            raw_variant = raw_copy.get("variant") if isinstance(raw_copy, dict) else None
+            if not isinstance(raw_variant, dict):
+                raise ValueError("Regeneration did not return a valid 'variant' object.")
+
+            variant_data = current_variant.model_dump()
+            if "headline" in requested_fields:
+                variant_data["headline"] = str(raw_variant.get("headline") or "").strip()
+            if "caption" in requested_fields:
+                variant_data["caption"] = str(raw_variant.get("caption") or "").strip()
+            if "call_to_action" in requested_fields:
+                variant_data["call_to_action"] = str(
+                    raw_variant.get("call_to_action") or raw_variant.get("cta") or ""
+                ).strip()
+            if "hashtags" in requested_fields:
+                variant_data["hashtags"] = _coerce_hashtags(raw_variant.get("hashtags"))
+
+            if not variant_data["headline"] and not variant_data["caption"]:
+                raise ValueError("Regenerated variant cannot have empty headline and caption.")
+            updated.content.content_variants = [
+                type(current_variant).model_validate(variant_data)
+            ]
         except Exception as exc:
             raise OrchestratorError(
                 failed_part="content",
