@@ -2,8 +2,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import StepIndicator from "../components/StepIndicator";
 import RecommendationCard from "../components/RecommendationCard";
+import GeoTargetingCard from "../components/GeoTargetingCard";
 import PipelineTimeline from "../components/PipelineTimeline";
 import { useJob } from "../context/jobHooks";
+import { ApiError, regenerateSections } from "../lib/api";
 import "../styles/ContentGeneration.css";
 
 const STEPS = [
@@ -14,6 +16,15 @@ const STEPS = [
 ];
 
 const PREVIEW_ROW_LIMIT = 8;
+const REGENERATABLE_SECTIONS = [
+  { key: "ad_copy", label: "Ad Copy" },
+  { key: "captions", label: "Caption" },
+  { key: "hashtags", label: "Hashtags" },
+  { key: "image", label: "Generated Image" },
+  { key: "platform_choice", label: "Why this Platform?" },
+  { key: "financial_projection", label: "Financial Projection" },
+  { key: "risk_vs_reward", label: "Risks vs Rewards" },
+];
 
 function isValidDate(value) {
   if (value === null || value === undefined || value === "") return true;
@@ -172,6 +183,8 @@ export default function ContentGeneration() {
     reset,
     dismissError,
     dismissNotification,
+    applyFinalResult,
+    syncFinalResultToHistory,
   } = job.actions;
 
   // Local UI-only state (file/preview/copy state — not part of the pipeline).
@@ -189,12 +202,21 @@ export default function ContentGeneration() {
   const [validationError, setValidationError] = useState(null);
   const [isValidating, setIsValidating] = useState(false);
   const [validationProgress, setValidationProgress] = useState(0);
+  const [displayResult, setDisplayResult] = useState(null);
+  const [regenSections, setRegenSections] = useState([]);
+  const [regenInstruction, setRegenInstruction] = useState("");
+  const [regenBusy, setRegenBusy] = useState(false);
+  const [regenError, setRegenError] = useState("");
   const fileInputRef = useRef(null);
 
   // Clear the indicator's "done" pill when the user lands here.
   useEffect(() => {
     if (notification) dismissNotification();
   }, [notification, dismissNotification]);
+
+  useEffect(() => {
+    setDisplayResult(finalResult || null);
+  }, [finalResult]);
 
   /* ---------------------- step indicator computation ---------------------- */
 
@@ -279,6 +301,11 @@ export default function ContentGeneration() {
     setCsvPreview({ columns: [], rows: [], totalRows: 0, missingColumns: [] });
     setAreaOverride("");
     setReviewMode(false);
+    setDisplayResult(null);
+    setRegenSections([]);
+    setRegenInstruction("");
+    setRegenBusy(false);
+    setRegenError("");
   };
 
   const handleRetry = () => {
@@ -295,6 +322,56 @@ export default function ContentGeneration() {
       setCopiedField(field);
       setTimeout(() => setCopiedField(null), 2000);
     });
+  };
+
+  const toggleRegenSection = (key) => {
+    setRegenSections((prev) =>
+      prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key],
+    );
+  };
+
+  const handleRegenerateSelected = async () => {
+    const currentResult = displayResult || finalResult;
+    if (!currentResult || !phaseAResponse || selectedIdx == null || regenBusy)
+      return;
+    if (!regenSections.length) {
+      setRegenError("Select at least one section to regenerate.");
+      return;
+    }
+    if (!regenInstruction.trim()) {
+      setRegenError("Tell the AI what to improve before regenerating.");
+      return;
+    }
+
+    const selected = phaseAResponse.strategies?.[selectedIdx];
+    if (!selected) return;
+
+    setRegenBusy(true);
+    setRegenError("");
+    try {
+      const data = await regenerateSections({
+        selectedStrategy: selected,
+        riskAnalysis: phaseAResponse.risk_analysis,
+        liveContext: phaseAResponse.live_context,
+        currentResult,
+        sections: regenSections,
+        instruction: regenInstruction,
+        area: phaseAResponse.metadata?.area,
+      });
+      setDisplayResult(data);
+      applyFinalResult(data);
+      setRegenSections([]);
+      await syncFinalResultToHistory(data);
+      setRegenInstruction("");
+    } catch (err) {
+      const apiErr =
+        err instanceof ApiError
+          ? err
+          : new ApiError(String(err?.message || err));
+      setRegenError(apiErr.message || "Regeneration failed.");
+    } finally {
+      setRegenBusy(false);
+    }
   };
 
   /* ----------------------------- derived data ---------------------------- */
@@ -326,30 +403,45 @@ export default function ContentGeneration() {
   }, [phaseAResponse]);
 
   const generated = useMemo(() => {
-    if (!finalResult) return null;
-    const variants = finalResult.content?.content_variants || [];
+    if (!displayResult) return null;
+    const variants = displayResult.content?.content_variants || [];
     const primary = variants[0] || {};
-    const allHashtags = Array.from(
-      new Set(variants.flatMap((v) => v.hashtags || [])),
-    );
+    const allHashtags = variants[0]?.hashtags?.filter(Boolean) || [];
     return {
       platform:
         phaseAResponse?.strategies?.[selectedIdx]?.strategy?.platform || "—",
       format:
         phaseAResponse?.strategies?.[selectedIdx]?.strategy?.format || "—",
-      product: finalResult.metadata?.featured_product?.product || "",
+      product: displayResult.metadata?.featured_product?.product || "",
       adCopy: [primary.headline, primary.caption, primary.call_to_action]
         .filter(Boolean)
         .join("\n\n"),
-      captions: variants.map((v) => v.caption).filter(Boolean),
+      captions: [primary.caption].filter(Boolean),
       hashtags: allHashtags,
-      image: finalResult.content?.image?.url || (finalResult.content?.image?.base64
-        ? `data:${finalResult.content.image.mime_type};base64,${finalResult.content.image.base64}`
-        : null),
-      explanation: finalResult.explanation,
-      imagePrompt: finalResult.content?.image_prompt || "",
+      image:
+        displayResult.content?.image?.url ||
+        (displayResult.content?.image?.base64
+          ? `data:${displayResult.content.image.mime_type};base64,${displayResult.content.image.base64}`
+          : null),
+      explanation: displayResult.explanation,
+      imagePrompt: displayResult.content?.image_prompt || "",
     };
-  }, [finalResult, phaseAResponse, selectedIdx]);
+  }, [displayResult, phaseAResponse, selectedIdx]);
+
+  const selectedGeoRecommendation = useMemo(() => {
+    if (!phaseAResponse || selectedIdx == null) return null;
+    const selectedProduct =
+      phaseAResponse.strategies?.[selectedIdx]?.featured_product?.product;
+    if (!selectedProduct) return null;
+    const geoMap = phaseAResponse.metadata?.geo_targeting || {};
+    const geoEntry = geoMap[selectedProduct];
+    if (!geoEntry || typeof geoEntry !== "object") return null;
+    return {
+      success: Boolean(geoEntry.success),
+      source: geoEntry.source || "unknown",
+      data: geoEntry.data || {},
+    };
+  }, [phaseAResponse, selectedIdx]);
 
   /* ----------------------------- view flags ----------------------------- */
 
@@ -360,8 +452,7 @@ export default function ContentGeneration() {
   const showUploadStep = status === "idle" || isPhaseAError;
   const showRunningTimeline = isRunning;
   const showPicker = status === "awaiting" && !reviewMode;
-  const showReview =
-    (status === "awaiting" && reviewMode) || isPhaseBError;
+  const showReview = (status === "awaiting" && reviewMode) || isPhaseBError;
   const showResults = status === "completed" && generated;
 
   /* ------------------------------- render ------------------------------- */
@@ -410,7 +501,7 @@ export default function ContentGeneration() {
                 Cancel campaign
               </button>
               <span className="gen-running-cta">
-                Running in the background — feel free to navigate around.
+                Running in the background, feel free to navigate around.
               </span>
             </div>
           </div>
@@ -820,6 +911,7 @@ export default function ContentGeneration() {
                     </svg>
                   </button>
                 </div>
+
               </div>
             );
           })()}
@@ -833,6 +925,51 @@ export default function ContentGeneration() {
                 GLM has generated complete, trend-informed ad content for your
                 campaign. Copy and use directly.
               </p>
+            </div>
+
+            <div className="gen-regenerate-panel">
+              <div className="gen-regenerate-panel__header">
+                <h3>Refine Selected Sections</h3>
+                <p>
+                  Select one or more sections, then tell the AI what to improve.
+                  Only your selected sections will be regenerated.
+                </p>
+              </div>
+              <div className="gen-regenerate-options">
+                {REGENERATABLE_SECTIONS.map((section) => (
+                  <label key={section.key} className="gen-regenerate-option">
+                    <input
+                      type="checkbox"
+                      checked={regenSections.includes(section.key)}
+                      onChange={() => toggleRegenSection(section.key)}
+                    />
+                    <span>{section.label}</span>
+                  </label>
+                ))}
+              </div>
+              <textarea
+                className="gen-regenerate-input"
+                placeholder="Example: Keep the same product and offer, but make the captions shorter and more playful."
+                value={regenInstruction}
+                onChange={(e) => setRegenInstruction(e.target.value)}
+                rows={4}
+              />
+              {regenError && (
+                <div className="gen-regenerate-error" role="alert">
+                  {regenError}
+                </div>
+              )}
+              <div className="gen-regenerate-actions">
+                <button
+                  className="btn btn-primary"
+                  onClick={handleRegenerateSelected}
+                  disabled={regenBusy}
+                >
+                  {regenBusy
+                    ? "Regenerating..."
+                    : "Regenerate Selected Sections"}
+                </button>
+              </div>
             </div>
 
             <div className="gen-output-grid">
@@ -899,16 +1036,12 @@ export default function ContentGeneration() {
 
               <div className="gen-output-card gen-output-card--captions">
                 <div className="gen-output-card__header">
-                  <span className="gen-output-card__label">
-                    Caption Options
-                  </span>
+                  <span className="gen-output-card__label">Caption</span>
                 </div>
                 <div className="gen-captions">
                   {generated.captions.map((cap, i) => (
                     <div key={i} className="gen-caption-item">
-                      <span className="gen-caption-item__num">
-                        Option {i + 1}
-                      </span>
+                      <span className="gen-caption-item__num">Primary</span>
                       <p>{cap}</p>
                       <button
                         className="gen-copy-btn"
@@ -974,31 +1107,52 @@ export default function ContentGeneration() {
                       Financial Projection
                     </span>
                   </div>
+                  {(() => {
+                    const finance = generated.explanation.financial_projection;
+                    const durationLabel =
+                      finance.forecast_window_label ||
+                      `${finance.forecast_duration_days || 1} day${
+                        (finance.forecast_duration_days || 1) === 1 ? "" : "s"
+                      }`;
+                    return (
                   <div className="gen-finance-grid">
                     {[
+                      ["Forecast Window", durationLabel],
                       [
-                        "Spend",
-                        `RM ${generated.explanation.financial_projection.spend_rm.toFixed(0)}`,
+                        "Total Spend",
+                        `RM ${(finance.total_spend_rm ?? finance.spend_rm).toFixed(0)}`,
                       ],
                       [
-                        "Reach",
-                        generated.explanation.financial_projection.predicted_reach.toLocaleString(),
+                        "Total Reach",
+                        (
+                          finance.total_predicted_reach ??
+                          finance.predicted_reach
+                        ).toLocaleString(),
                       ],
                       [
-                        "Clicks",
-                        generated.explanation.financial_projection.predicted_clicks.toLocaleString(),
+                        "Total Clicks",
+                        (
+                          finance.total_predicted_clicks ??
+                          finance.predicted_clicks
+                        ).toLocaleString(),
                       ],
                       [
-                        "Sales",
-                        generated.explanation.financial_projection.predicted_sales.toLocaleString(),
+                        "Total Sales",
+                        (
+                          finance.total_predicted_sales ??
+                          finance.predicted_sales
+                        ).toLocaleString(),
                       ],
                       [
-                        "Revenue",
-                        `RM ${generated.explanation.financial_projection.predicted_revenue_rm.toFixed(0)}`,
+                        "Total Revenue",
+                        `RM ${(
+                          finance.total_predicted_revenue_rm ??
+                          finance.predicted_revenue_rm
+                        ).toFixed(0)}`,
                       ],
                       [
                         "ROI",
-                        `${generated.explanation.financial_projection.roi_percent.toFixed(0)}%`,
+                        `${finance.roi_percent.toFixed(0)}%`,
                       ],
                     ].map(([label, value]) => (
                       <div key={label} className="gen-finance-cell">
@@ -1007,6 +1161,8 @@ export default function ContentGeneration() {
                       </div>
                     ))}
                   </div>
+                    );
+                  })()}
                   <p className="gen-output-card__text gen-finance-summary">
                     {generated.explanation.financial_projection.summary_line}
                   </p>
@@ -1056,6 +1212,16 @@ export default function ContentGeneration() {
               )}
             </div>
 
+            {selectedGeoRecommendation && (
+              <GeoTargetingCard
+                productName={generated?.product || "Selected product"}
+                storeLocation={phaseAResponse?.metadata?.area || "Malaysia"}
+                recommendation={selectedGeoRecommendation}
+                isLoading={false}
+                onRetry={handleAnalyse}
+              />
+            )}
+
             <div className="gen-step-actions gen-step-actions--split">
               <button className="btn btn-ghost" onClick={handleReset}>
                 Start New Campaign
@@ -1063,7 +1229,10 @@ export default function ContentGeneration() {
               <button
                 className="btn btn-secondary"
                 onClick={() =>
-                  copyToClipboard(JSON.stringify(finalResult, null, 2), "json")
+                  copyToClipboard(
+                    JSON.stringify(displayResult || finalResult, null, 2),
+                    "json",
+                  )
                 }
               >
                 {copiedField === "json" ? (

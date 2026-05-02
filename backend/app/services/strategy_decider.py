@@ -58,6 +58,7 @@ def _json_schema_hint(count: int) -> str:
         '        "timing": "<e.g. \'Friday 8PM, 5 days\'>",\n'
         '        "budget": "RM <integer>",\n'
         '        "angle": "<short creative hook, <= 8 words>",\n'
+        '        "forecast_window_months": 1,\n'
         '        "predicted_reach": <integer, estimated people reached>,\n'
         '        "predicted_roi": "<integer>%"\n'
         "      }\n"
@@ -82,9 +83,11 @@ RULES_TEMPLATE = """Rules:
   (case-sensitive). Do NOT invent product names.
 - `predicted_reach` must be a plain integer (no commas, no 'k').
 - `predicted_roi` must be a string like "688%".
+- `forecast_window_months` must be exactly 1.
 - `budget` must start with "RM " and be a whole ringgit amount (no decimals).
 - Base your reach/ROI heuristics on the platform_insights CPM values in the
   context when available. Be reasonable, not fantastical.
+- `predicted_reach` and `predicted_roi` must correspond to a 1-month horizon.
 - Tie at least one strategy's `angle` to the nearest upcoming_event or to the
   seasonal_opportunity.
 - `rationale`: 1-2 short sentences. Reference the risk score and one concrete
@@ -142,11 +145,18 @@ def _build_user_prompt(
     risk: RiskAnalysisResponse,
     context: LiveContext,
     count: int,
+    geo_context: Optional[str] = None,
 ) -> str:
+    geo_block = (
+        f"\n\n--- LIVE GEO TARGETING DATA ---\n{geo_context}\n"
+        if geo_context and geo_context.strip()
+        else ""
+    )
     return (
         f"Today is {today.isoformat()}. Target region: {area}.\n\n"
         f"--- INVENTORY RISK ANALYSIS ---\n{_format_risk_summary(risk)}\n\n"
         f"--- LIVE MARKET CONTEXT ---\n{_format_context_summary(context)}\n\n"
+        f"{geo_block}"
         f"Decide {count} diverse ad strategies for the team to choose from.\n\n"
         f"{_json_schema_hint(count)}\n\n{RULES_TEMPLATE.format(count=count)}"
     )
@@ -194,6 +204,10 @@ def _coerce_budget(value) -> str:
     return "RM 0"
 
 
+def _coerce_forecast_window_months(value) -> int:
+    return 1
+
+
 def _coerce_strategy(raw: dict) -> AdStrategy:
     """Normalize a single strategy dict into our strict schema."""
     payload = raw if isinstance(raw, dict) else {}
@@ -206,6 +220,9 @@ def _coerce_strategy(raw: dict) -> AdStrategy:
             timing=str(payload.get("timing") or "").strip() or "This weekend",
             budget=_coerce_budget(payload.get("budget")),
             angle=str(payload.get("angle") or "").strip() or "Limited time offer",
+            forecast_window_months=_coerce_forecast_window_months(
+                payload.get("forecast_window_months")
+            ),
             predicted_reach=_coerce_reach(payload.get("predicted_reach")),
             predicted_roi=_coerce_roi(payload.get("predicted_roi")),
         )
@@ -342,6 +359,7 @@ def _enforce_diversity(
                     timing="This weekend",
                     budget="RM 50",
                     angle=f"Move {product.product} fast",
+                    forecast_window_months=1,
                     predicted_reach=max(500, int(product.risk_score * 30)),
                     predicted_roi="200%",
                 ),
@@ -376,6 +394,7 @@ def decide_strategy(
     count: int = DEFAULT_STRATEGY_COUNT,
     glm_fn: Optional[GlmCallable] = None,
     unit_price_lookup: Optional[dict[str, float]] = None,
+    geo_context: Optional[str] = None,
 ) -> StrategyResponse:
     """Decide N diverse ad strategies from Part 1 + Part 2 outputs.
 
@@ -409,6 +428,7 @@ def decide_strategy(
                 risk=risk,
                 context=context,
                 count=target_count,
+                geo_context=geo_context,
             ),
         },
     ]

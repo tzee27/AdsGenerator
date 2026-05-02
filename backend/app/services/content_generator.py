@@ -1,12 +1,12 @@
 """Part 4 — Generate Content.
 
 Two-step pipeline:
-  1. Ask GLM-5.1 for 3 complete ad-copy variants AND one unified image prompt.
+  1. Ask GLM-5.1 for 1 complete ad-copy variant AND one unified image prompt.
   2. Feed the image prompt to GLM-Image (Z.AI) to produce a single shared
      visual for the campaign. Aspect ratio is auto-picked from the strategy's
      platform (e.g. TikTok → 9:16 portrait, Facebook → 16:9 landscape).
 
-Returns inline base64 image + the three copy variants.
+Returns inline base64 image + a single copy variant.
 """
 
 from __future__ import annotations
@@ -32,8 +32,8 @@ from app.services import glm_image_client as _image
 logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """You are a senior performance-marketing copywriter and creative director.
-Given an ad strategy, you must produce THREE distinct, scroll-stopping content
-variants plus ONE unified image-generation prompt that will be sent to a
+Given an ad strategy, you must produce ONE scroll-stopping content
+variant plus ONE unified image-generation prompt that will be sent to a
 text-to-image model (GLM-Image). Reply with a single JSON object only — no prose,
 no markdown fences."""
 
@@ -45,16 +45,13 @@ JSON_SCHEMA_HINT = """Return EXACTLY this JSON shape:
       "caption": "<2-4 sentences, platform-appropriate voice>",
       "call_to_action": "<short imperative, e.g. 'Shop now', 'Grab yours'>",
       "hashtags": ["#Tag1", "#Tag2", "..."]
-    },
-    { "...variant 2..." },
-    { "...variant 3..." }
+    }
   ],
   "image_prompt": "<one detailed paragraph describing subject, composition, style, lighting, mood and colors for a text-to-image model>"
 }"""
 
 RULES = """Rules:
-- Exactly 3 content_variants. Each variant must feel distinct (different hook/angle),
-  not just paraphrases. At least one should be value-led, at least one emotion-led.
+- Exactly 1 content_variants item.
 - Match the strategy's platform voice: TikTok = casual/trending, Facebook = direct/clear,
   Instagram = aspirational/visual, Shopee/Lazada = deal-focused.
 - Hashtags: use your judgement for count; each must start with '#' and contain no spaces.
@@ -143,9 +140,7 @@ def _coerce_payload(raw: dict) -> tuple[list[ContentVariant], str]:
 
     variants = [_coerce_variant(v if isinstance(v, dict) else {}) for v in variants_raw]
 
-    while len(variants) < 3 and variants:
-        variants.append(variants[-1])
-    variants = variants[:3]
+    variants = variants[:1]
 
     if any(not v.headline and not v.caption for v in variants):
         raise ValueError("At least one content variant is empty.")
@@ -170,7 +165,7 @@ def generate_content(
     glm_fn: Optional[GlmCallable] = None,
     image_fn: Optional[ImageCallable] = None,
 ) -> ContentGenerationResponse:
-    """Generate 3 ad-copy variants + 1 shared image for the given strategy."""
+    """Generate 1 ad-copy variant + 1 shared image for the given strategy."""
     effective_area = (area or settings.AREA or "Malaysia").strip() or "Malaysia"
     reference_date = today or date.today()
     call_glm: GlmCallable = glm_fn or _glm.chat_json

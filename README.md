@@ -102,6 +102,47 @@ npm install
 npm run dev
 ```
 
+## 🔁 CI/CD Pipeline & Automation
+
+This project uses automated deployment with Vercel for the frontend delivery flow.
+
+### What "automation" means in this project
+
+- Deployment steps are executed by the platform (Vercel), not manually by developers.
+- A Git push triggers build and deployment automatically for the connected branch.
+- Every deployment is traceable through commit history and Vercel deployment logs.
+
+### Current CI/CD flow
+
+1. Developer pushes code to the repository branch.
+2. Vercel detects the new commit automatically.
+3. Vercel installs dependencies and runs the frontend build.
+4. If build succeeds, Vercel deploys the latest version.
+5. If build fails, deployment is blocked and logs show the failure reason.
+
+### Deployment behavior
+
+- **Continuous Deployment (CD)**: Enabled via Vercel Git integration.
+- **Production deployment**: Triggered by pushes to the production branch (commonly `main`).
+- **Preview deployment**: Triggered for pull requests/feature branches when configured in Vercel.
+
+### Benefits of this automation
+
+- Faster releases with no manual upload steps.
+- Consistent deployment process across team members.
+- Lower human error risk during release.
+- Quick rollback by redeploying a previous successful version in Vercel.
+
+### Recommended extension (optional CI hardening)
+
+To strengthen CI before deployment, add a GitHub Actions workflow to run:
+
+- Lint checks
+- Unit tests
+- Build verification
+
+This ensures only validated code reaches the Vercel deployment stage.
+
 ## 🔒 Security
 
 - Ensure `.env` and `firebase-credentials.json` are **never** committed to version control (already configured in `.gitignore`).

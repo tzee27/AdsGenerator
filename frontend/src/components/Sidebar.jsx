@@ -69,7 +69,7 @@ export default function Sidebar() {
             <path d="M2 12l10 5 10-5" />
           </svg>
         </div>
-        <span className="sidebar__brand-name">AdPilot</span>
+        <span className="sidebar__brand-name">AdKedai</span>
       </div>
 
       {/* Navigation */}

@@ -104,6 +104,13 @@ def _format_int_with_commas(value: int) -> str:
     return f"{value:,}"
 
 
+def _forecast_window_from_strategy(strategy: AdStrategy) -> tuple[int, int, str]:
+    months = 1
+    days = months * 30
+    label = f"{months} month" + ("s" if months != 1 else "")
+    return months, days, label
+
+
 def compute_financial_projection(
     *,
     strategy: AdStrategy,
@@ -127,12 +134,20 @@ def compute_financial_projection(
     roi_percent = (
         round(((revenue - spend) / spend) * 100.0, 2) if spend > 0 else 0.0
     )
+    _, duration_days, duration_label = _forecast_window_from_strategy(strategy)
+
+    total_spend = round(spend * duration_days, 2)
+    total_reach = reach * duration_days
+    total_clicks = clicks * duration_days
+    total_sales = sales * duration_days
+    total_revenue = round(revenue * duration_days, 2)
 
     summary = (
-        f"Spend RM {int(round(spend))} → Reach {_format_int_with_commas(reach)} → "
-        f"{_format_int_with_commas(clicks)} clicks → "
-        f"{_format_int_with_commas(sales)} sales → "
-        f"RM {int(round(revenue)):,} revenue (ROI {int(round(roi_percent))}%)"
+        f"{duration_label} forecast: Spend RM {int(round(total_spend)):,} → "
+        f"Reach {_format_int_with_commas(total_reach)} → "
+        f"{_format_int_with_commas(total_clicks)} clicks → "
+        f"{_format_int_with_commas(total_sales)} sales → "
+        f"RM {int(round(total_revenue)):,} revenue (ROI {int(round(roi_percent))}%)"
     )
 
     return FinancialProjection(
@@ -145,6 +160,13 @@ def compute_financial_projection(
         average_order_value_rm=round(aov, 2),
         predicted_revenue_rm=revenue,
         roi_percent=roi_percent,
+        forecast_duration_days=duration_days,
+        forecast_window_label=duration_label,
+        total_spend_rm=total_spend,
+        total_predicted_reach=total_reach,
+        total_predicted_clicks=total_clicks,
+        total_predicted_sales=total_sales,
+        total_predicted_revenue_rm=total_revenue,
         summary_line=summary,
     )
 
@@ -242,6 +264,7 @@ def _format_strategy_block(strategy: AdStrategy) -> str:
         f"  timing: {strategy.timing}\n"
         f"  budget: {strategy.budget}\n"
         f"  angle: {strategy.angle}\n"
+        f"  forecast_window_months: {getattr(strategy, 'forecast_window_months', 1)}\n"
         f"  predicted_reach: {strategy.predicted_reach}\n"
         f"  predicted_roi: {strategy.predicted_roi}"
     )
@@ -268,12 +291,18 @@ def _build_user_prompt(
     strategy: AdStrategy,
     variants: Optional[list[ContentVariant]],
     product: Optional[ContentProduct],
+    extra_instruction: Optional[str] = None,
 ) -> str:
     product_line = (
         f"Featured product: {product.product}"
         + (f" (category: {product.category})" if product.category else "")
         if product
         else "No specific featured product."
+    )
+    instruction_block = (
+        f"\n\n--- USER FEEDBACK TO APPLY ---\n{extra_instruction.strip()}"
+        if extra_instruction and extra_instruction.strip()
+        else ""
     )
     return (
         f"Today is {today.isoformat()}. Target region: {area}.\n\n"
@@ -282,7 +311,7 @@ def _build_user_prompt(
         f"--- STRATEGY ---\n{_format_strategy_block(strategy)}\n\n"
         f"--- {product_line} ---\n\n"
         f"--- AD COPY VARIANTS ---\n{_format_content_block(variants)}\n\n"
-        f"{JSON_SCHEMA_HINT}\n\n{RULES}"
+        f"{JSON_SCHEMA_HINT}\n\n{RULES}{instruction_block}"
     )
 
 
@@ -330,6 +359,7 @@ def generate_explanation(
     area: Optional[str] = None,
     today: Optional[date] = None,
     glm_fn: Optional[GlmCallable] = None,
+    extra_instruction: Optional[str] = None,
 ) -> ExplanationResponse:
     """Build the structured explanation: deterministic finance + LLM prose."""
     effective_area = (area or settings.AREA or "Malaysia").strip() or "Malaysia"
@@ -355,6 +385,7 @@ def generate_explanation(
                 strategy=strategy,
                 variants=variants,
                 product=product,
+                extra_instruction=extra_instruction,
             ),
         },
     ]
