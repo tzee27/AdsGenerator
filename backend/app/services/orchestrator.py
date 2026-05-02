@@ -23,6 +23,7 @@ from app.core.config import settings
 from app.schemas.ads import (
     FinalizeMetadata,
     FinalizeResponse,
+    RegeneratableSection,
     StrategiesMetadata,
     StrategiesResponse,
 )
@@ -32,9 +33,11 @@ from app.schemas.explanation import ExplanationResponse
 from app.schemas.product import ContentProduct
 from app.schemas.risk import RiskAnalysisResponse, RiskProduct
 from app.schemas.strategy import StrategyOption
+from app.services import glm_client as _glm
 from app.services import glm_image_client as _image
-from app.services.content_generator import generate_content
+from app.services.content_generator import _coerce_payload, generate_content
 from app.services.context_gatherer import gather_live_context
+from app.services.explanation_generator import compute_financial_projection
 from app.services.explanation_generator import generate_explanation
 from app.services.risk_analyser import (
     ParsedRow,
@@ -360,4 +363,160 @@ __all__ = [
     "RiskAnalyserError",
     "run_phase_a",
     "run_phase_b",
+    "run_phase_b_regenerate_sections",
 ]
+
+
+def run_phase_b_regenerate_sections(
+    *,
+    selected: StrategyOption,
+    risk: RiskAnalysisResponse,
+    context: LiveContext,
+    current: FinalizeResponse,
+    sections: list[RegeneratableSection],
+    instruction: str,
+    area: Optional[str] = None,
+    today: Optional[date] = None,
+    glm_fn: Optional[GlmCallable] = None,
+    image_fn: Optional[ImageCallable] = None,
+) -> FinalizeResponse:
+    """Regenerate only selected final-result sections from user feedback."""
+    effective_area = (area or settings.AREA or "Malaysia").strip() or "Malaysia"
+    reference_date = today or date.today()
+    selected_set = set(sections)
+    featured = selected.featured_product
+    updated = current.model_copy(deep=True)
+    call_glm: GlmCallable = glm_fn or _glm.chat_json
+    call_image: ImageCallable = image_fn or _image.generate_image
+
+    if {"ad_copy", "captions", "hashtags"} & selected_set:
+        copy_messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You rewrite ad copy variants. Return JSON only with this shape: "
+                    '{"content_variants":[{"headline":"...","caption":"...","call_to_action":"...","hashtags":["#Tag"]}]}.'
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"Target region: {effective_area}. Today: {reference_date.isoformat()}.\n"
+                    f"Platform: {selected.strategy.platform}. Format: {selected.strategy.format}.\n"
+                    f"Audience: {selected.strategy.audience}. Pricing: {selected.strategy.pricing}. "
+                    f"Angle: {selected.strategy.angle}.\n"
+                    f"Featured product: {featured.product}.\n"
+                    f"Current variants JSON: {current.content.content_variants}\n"
+                    f"User instruction: {instruction}\n"
+                    "Keep unrequested qualities stable while improving the requested intent. "
+                    "Produce exactly 1 variant."
+                ),
+            },
+        ]
+        try:
+            raw_copy = call_glm(copy_messages, enable_web_search=False, temperature=0.7)
+            variants, _ = _coerce_payload(
+                {
+                    "content_variants": raw_copy.get("content_variants")
+                    or raw_copy.get("variants"),
+                    "image_prompt": current.content.image_prompt,
+                }
+            )
+            updated.content.content_variants = variants
+        except Exception as exc:
+            raise OrchestratorError(
+                failed_part="content",
+                original=exc,
+                completed={"content": False, "explanation": False},
+                featured_product=featured,
+                area=effective_area,
+            ) from exc
+
+    if "image" in selected_set:
+        image_prompt_messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You rewrite image-generation prompts for ads. Return JSON only: "
+                    '{"image_prompt":"..."}'
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"Platform: {selected.strategy.platform}. Format: {selected.strategy.format}. "
+                    f"Pricing: {selected.strategy.pricing}. Angle: {selected.strategy.angle}. "
+                    f"Featured product: {featured.product}.\n"
+                    f"Current image prompt: {current.content.image_prompt}\n"
+                    f"User instruction: {instruction}"
+                ),
+            },
+        ]
+        try:
+            raw_image_prompt = call_glm(
+                image_prompt_messages, enable_web_search=False, temperature=0.7
+            )
+            image_prompt = str(raw_image_prompt.get("image_prompt") or "").strip()
+            if not image_prompt:
+                raise ValueError("Regeneration did not return an image_prompt.")
+            image_result = call_image(
+                image_prompt,
+                platform=selected.strategy.platform,
+                format_hint=selected.strategy.format,
+            )
+            updated.content.image_prompt = image_prompt
+            updated.content.image.url = image_result.url
+            updated.content.image.mime_type = image_result.mime_type
+            updated.content.image.base64 = None
+        except Exception as exc:
+            raise OrchestratorError(
+                failed_part="content",
+                original=exc,
+                completed={"content": False, "explanation": False},
+                featured_product=featured,
+                area=effective_area,
+            ) from exc
+
+    if {"platform_choice", "risk_vs_reward"} & selected_set:
+        try:
+            explanation = generate_explanation(
+                risk=risk,
+                context=context,
+                strategy=selected.strategy,
+                variants=updated.content.content_variants,
+                product=featured,
+                unit_price_rm=selected.unit_price_rm,
+                area=effective_area,
+                today=reference_date,
+                glm_fn=call_glm,
+                extra_instruction=instruction,
+            )
+            if "platform_choice" in selected_set:
+                updated.explanation.platform_choice = explanation.platform_choice
+            if "risk_vs_reward" in selected_set:
+                updated.explanation.risk_vs_reward = explanation.risk_vs_reward
+        except Exception as exc:
+            raise OrchestratorError(
+                failed_part="explanation",
+                original=exc,
+                completed={"content": True, "explanation": False},
+                featured_product=featured,
+                area=effective_area,
+            ) from exc
+
+    if "financial_projection" in selected_set:
+        updated.explanation.financial_projection = compute_financial_projection(
+            strategy=selected.strategy,
+            risk=risk,
+            product=featured,
+            unit_price_rm=selected.unit_price_rm,
+        )
+
+    updated.metadata.area = effective_area
+    updated.metadata.featured_product = featured
+    updated.metadata.unit_price_rm = round(selected.unit_price_rm, 2)
+    updated.metadata.generated_at = _now_iso_z()
+    updated.explanation.area = effective_area
+    updated.explanation.generated_at = _now_iso_z()
+    updated.content.generated_at = _now_iso_z()
+    return updated

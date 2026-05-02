@@ -21,6 +21,7 @@ from app.schemas.ads import (
     AdsGenerationErrorDetail,
     FinalizeRequest,
     FinalizeResponse,
+    RegenerateSectionsRequest,
     StrategiesResponse,
 )
 from app.services.glm_client import GLMClientError, GLMNotConfiguredError
@@ -32,6 +33,7 @@ from app.services.orchestrator import (
     OrchestratorError,
     run_phase_a,
     run_phase_b,
+    run_phase_b_regenerate_sections,
 )
 from app.services.risk_analyser import RiskAnalyserError
 
@@ -175,6 +177,35 @@ def finalize(
             area=payload.area,
         )
         return res
+    except OrchestratorError as exc:
+        _raise_for_orchestrator_error(exc)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post(
+    "/regenerate-sections",
+    response_model=FinalizeResponse,
+    summary="Regenerate selected final-output sections with user feedback",
+    responses={
+        502: {"description": "Upstream LLM/image API failed", "model": AdsGenerationErrorDetail},
+        503: {"description": "GLM-text or GLM-Image not configured (missing API key)"},
+    },
+)
+def regenerate_sections(
+    payload: RegenerateSectionsRequest,
+    current_user: dict = Depends(get_current_user),
+) -> FinalizeResponse:
+    try:
+        return run_phase_b_regenerate_sections(
+            selected=payload.selected_strategy,
+            risk=payload.risk_analysis,
+            context=payload.live_context,
+            current=payload.current_result,
+            sections=payload.sections,
+            instruction=payload.instruction,
+            area=payload.area,
+        )
     except OrchestratorError as exc:
         _raise_for_orchestrator_error(exc)
     except ValueError as exc:

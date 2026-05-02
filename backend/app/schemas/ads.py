@@ -9,7 +9,7 @@ StrategyOption, then sends back the chosen option + the intermediates we need
 to feed Parts 4 and 5.
 """
 
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -83,6 +83,40 @@ class FinalizeResponse(BaseModel):
     content: ContentGenerationResponse
     explanation: ExplanationResponse
     metadata: FinalizeMetadata
+
+
+RegeneratableSection = Literal[
+    "ad_copy",
+    "captions",
+    "hashtags",
+    "image",
+    "platform_choice",
+    "financial_projection",
+    "risk_vs_reward",
+]
+
+
+class RegenerateSectionsRequest(BaseModel):
+    """Partial Phase B refresh based on user feedback."""
+
+    selected_strategy: StrategyOption
+    risk_analysis: RiskAnalysisResponse
+    live_context: LiveContext
+    current_result: FinalizeResponse
+    sections: list[RegeneratableSection] = Field(
+        ...,
+        min_length=1,
+        description="One or more section keys to regenerate.",
+    )
+    instruction: str = Field(
+        ...,
+        min_length=3,
+        description="User guidance for what to improve in the selected sections.",
+    )
+    area: Optional[str] = Field(
+        default=None,
+        description="Override target region; defaults to settings.AREA.",
+    )
 
 
 # ---------------------------------------------------------------------------

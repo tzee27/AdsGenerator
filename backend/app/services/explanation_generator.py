@@ -268,12 +268,18 @@ def _build_user_prompt(
     strategy: AdStrategy,
     variants: Optional[list[ContentVariant]],
     product: Optional[ContentProduct],
+    extra_instruction: Optional[str] = None,
 ) -> str:
     product_line = (
         f"Featured product: {product.product}"
         + (f" (category: {product.category})" if product.category else "")
         if product
         else "No specific featured product."
+    )
+    instruction_block = (
+        f"\n\n--- USER FEEDBACK TO APPLY ---\n{extra_instruction.strip()}"
+        if extra_instruction and extra_instruction.strip()
+        else ""
     )
     return (
         f"Today is {today.isoformat()}. Target region: {area}.\n\n"
@@ -282,7 +288,7 @@ def _build_user_prompt(
         f"--- STRATEGY ---\n{_format_strategy_block(strategy)}\n\n"
         f"--- {product_line} ---\n\n"
         f"--- AD COPY VARIANTS ---\n{_format_content_block(variants)}\n\n"
-        f"{JSON_SCHEMA_HINT}\n\n{RULES}"
+        f"{JSON_SCHEMA_HINT}\n\n{RULES}{instruction_block}"
     )
 
 
@@ -330,6 +336,7 @@ def generate_explanation(
     area: Optional[str] = None,
     today: Optional[date] = None,
     glm_fn: Optional[GlmCallable] = None,
+    extra_instruction: Optional[str] = None,
 ) -> ExplanationResponse:
     """Build the structured explanation: deterministic finance + LLM prose."""
     effective_area = (area or settings.AREA or "Malaysia").strip() or "Malaysia"
@@ -355,6 +362,7 @@ def generate_explanation(
                 strategy=strategy,
                 variants=variants,
                 product=product,
+                extra_instruction=extra_instruction,
             ),
         },
     ]

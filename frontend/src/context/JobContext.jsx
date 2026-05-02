@@ -99,6 +99,18 @@ export function JobProvider({ children }) {
     setState((prev) => (prev.error ? { ...prev, error: null } : prev));
   }, []);
 
+  const applyFinalResult = useCallback((result) => {
+    if (!result) return;
+    setState((prev) => ({
+      ...prev,
+      status: "completed",
+      phase: null,
+      currentStepIndex: PIPELINE_STEPS.length - 1,
+      finalResult: result,
+      error: null,
+    }));
+  }, []);
+
   /* ------------------------------- Phase A ------------------------------- */
 
   const startPhaseA = useCallback(
@@ -258,6 +270,7 @@ export function JobProvider({ children }) {
         reset,
         dismissNotification,
         dismissError,
+        applyFinalResult,
       },
     }),
     [
@@ -268,6 +281,7 @@ export function JobProvider({ children }) {
       reset,
       dismissNotification,
       dismissError,
+      applyFinalResult,
     ],
   );
 

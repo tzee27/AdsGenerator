@@ -128,4 +128,41 @@ export async function finalizeStrategy({
   });
 }
 
+export async function regenerateSections({
+  selectedStrategy,
+  riskAnalysis,
+  liveContext,
+  currentResult,
+  sections,
+  instruction,
+  area,
+  signal,
+} = {}) {
+  if (!selectedStrategy) {
+    throw new ApiError('A selected strategy is required.', { status: 400 });
+  }
+  if (!currentResult) {
+    throw new ApiError('A current generated result is required.', { status: 400 });
+  }
+  if (!Array.isArray(sections) || sections.length === 0) {
+    throw new ApiError('Select at least one section to regenerate.', { status: 400 });
+  }
+  if (!instruction?.trim()) {
+    throw new ApiError('Regeneration instruction is required.', { status: 400 });
+  }
+  return request('/ads/regenerate-sections', {
+    method: 'POST',
+    body: {
+      selected_strategy: selectedStrategy,
+      risk_analysis: riskAnalysis,
+      live_context: liveContext,
+      current_result: currentResult,
+      sections,
+      instruction: instruction.trim(),
+      area: area ?? null,
+    },
+    signal,
+  });
+}
+
 export const __TESTING__ = { API_BASE };

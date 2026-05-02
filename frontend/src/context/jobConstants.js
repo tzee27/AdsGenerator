@@ -31,7 +31,7 @@ export const PIPELINE_STEPS = [
     label: "Content Generation",
     phase: "B",
     estimatedMs: 6500,
-    description: "Composing three scroll-stopping ad copy variants.",
+    description: "Composing two scroll-stopping ad copy variants.",
   },
   {
     id: "image",
