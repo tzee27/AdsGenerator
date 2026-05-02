@@ -1,6 +1,6 @@
 """Tests for Part 2 — Live Context Gatherer.
 
-These tests never hit the real ilmu API; the GLM client is either mocked at the
+These tests never hit the real Z.A.I API; the GLM client is either mocked at the
 service layer (via `glm_fn=...`) or monkey-patched at the module level for
 endpoint tests.
 """
@@ -115,7 +115,7 @@ def test_endpoint_rejects_empty_products() -> None:
 
 def test_endpoint_returns_503_when_api_key_missing(monkeypatch) -> None:
     def fake_chat_json(*args, **kwargs):
-        raise GLMNotConfiguredError("ILMU_API_KEY is not set.")
+        raise GLMNotConfiguredError("ZAI_API_KEY is not set.")
 
     monkeypatch.setattr(
         context_gatherer._glm, "chat_json", fake_chat_json, raising=True
@@ -131,7 +131,7 @@ def test_endpoint_returns_503_when_api_key_missing(monkeypatch) -> None:
         },
     )
     assert response.status_code == 503
-    assert "ILMU_API_KEY" in response.json()["detail"]
+    assert "ZAI_API_KEY" in response.json()["detail"]
 
 
 def test_endpoint_returns_502_on_glm_error(monkeypatch) -> None:

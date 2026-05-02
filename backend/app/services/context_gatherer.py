@@ -126,7 +126,7 @@ def gather_live_context(
         products: Products to inform the context (typically high+medium risk).
         area: Override for the target region; falls back to `settings.AREA`.
         today: Override reference date (useful for tests).
-        glm_fn: Injected GLM callable; defaults to the real ilmu client.
+        glm_fn: Injected GLM callable; defaults to the real Z.A.I chat client.
     """
     if not products:
         raise ValueError("At least one product is required.")

@@ -344,7 +344,7 @@ def test_endpoint_respects_count_param(monkeypatch) -> None:
 
 def test_endpoint_returns_503_when_api_key_missing(monkeypatch) -> None:
     def fake_chat_json(*args, **kwargs):
-        raise GLMNotConfiguredError("ILMU_API_KEY is not set.")
+        raise GLMNotConfiguredError("ZAI_API_KEY is not set.")
 
     monkeypatch.setattr(
         strategy_decider._glm, "chat_json", fake_chat_json, raising=True

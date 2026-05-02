@@ -4,12 +4,12 @@
 
 # AdsGenerator — AI-Powered Advertising Strategy & Content Pipeline
 
-AdsGenerator is an intelligent marketing dashboard that transforms product inventory data into high-performing advertising campaigns. It analyzes inventory risk, gathers real-time market context via web-search enabled AI, and generates tailored ad creative (copy and visuals) using the Ilmu GLM 5.1 ecosystem.
+AdsGenerator is an intelligent marketing dashboard that transforms product inventory data into high-performing advertising campaigns. It analyzes inventory risk, gathers real-time market context via web-search enabled AI, and generates tailored ad creative (copy and visuals) using the **Z.A.I** GLM APIs (chat completions and GLM-Image).
 
 ## 🚀 Key Features
 
 - **Inventory Risk Analysis**: Deterministic scoring based on stock levels, expiry dates, and capital exposure.
-- **Live Market Context**: Real-time gathering of trending ad formats, platform CPMs, and upcoming events in target regions using **Ilmu GLM 5.1** web-search.
+- **Live Market Context**: Real-time gathering of trending ad formats, platform CPMs, and upcoming events in target regions using **Z.A.I GLM** web search.
 - **AI Strategy Proposer**: Generates diverse, data-driven marketing strategies (product, platform, audience, angle).
 - **Creative Generation**: Automated generation of ad headlines, captions, hashtags, and AI-generated visuals via **Z.AI (GLM-Image)**.
 - **Smart Rationale**: Provides financial and marketing justification for every generated ad.
@@ -19,21 +19,21 @@ AdsGenerator is an intelligent marketing dashboard that transforms product inven
 
 AdsGenerator uses AI in a staged pipeline so each output builds on the previous step.
 
-### 1) Market Context Collector (Ilmu GLM 5.1 + Web Search)
+### 1) Market Context Collector (Z.A.I GLM + Web Search)
 
 - **Purpose**: Pull fresh market signals before strategy generation.
 - **Inputs**: Region/area, product categories, and campaign intent.
 - **What AI does**: Searches for current trends, ad formats, estimated CPM ranges, and upcoming local events.
 - **Outputs**: Structured market context that is passed to downstream strategy and copy generation.
 
-### 2) Strategy Generator (Ilmu GLM 5.1 Text)
+### 2) Strategy Generator (Z.A.I GLM Text)
 
 - **Purpose**: Turn inventory and market context into practical campaign options.
 - **Inputs**: Inventory risk analysis, product metadata, and market context.
 - **What AI does**: Produces multiple campaign strategies with channel recommendations, audience targets, and messaging angles.
 - **Outputs**: Ranked or selectable strategy candidates for creative production.
 
-### 3) Copy Generator (Ilmu GLM 5.1 Text)
+### 3) Copy Generator (Z.A.I GLM Text)
 
 - **Purpose**: Create platform-ready ad text.
 - **Inputs**: Selected strategy + product information + campaign constraints.
@@ -47,7 +47,7 @@ AdsGenerator uses AI in a staged pipeline so each output builds on the previous 
 - **What AI does**: Converts prompts into image assets designed for ad use.
 - **Outputs**: AI-generated visual creatives paired with text variants.
 
-### 5) Rationale & Decision Support (Ilmu GLM 5.1 Text)
+### 5) Rationale & Decision Support (Z.A.I GLM Text)
 
 - **Purpose**: Explain _why_ each campaign output is recommended.
 - **Inputs**: Strategy, copy, visual intent, and inventory/business context.
@@ -64,7 +64,7 @@ AdsGenerator uses AI in a staged pipeline so each output builds on the previous 
 
 - **Frontend**: React, Vite, CSS (Vanilla), Firebase Auth & Firestore.
 - **Backend**: FastAPI, Pydantic, httpx.
-- **AI Integration**: Ilmu GLM 5.1 (Text & Web Search), Z.AI (Image Generation).
+- **AI Integration**: Z.AI GLM (chat completions with optional web search), Z.AI GLM-Image.
 
 ## 📂 Project Structure
 
@@ -89,7 +89,7 @@ cd backend
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -e .
-# Create .env based on .env.example with your ILMU_API_KEY and ZAI_API_KEY
+# Create .env based on .env.example with your ZAI_API_KEY (covers text + images)
 uvicorn app.main:app --reload
 ```
 

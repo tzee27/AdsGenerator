@@ -1,11 +1,11 @@
-"""Reusable GLM-5.1 client backed by the ilmu console (OpenAI-compatible).
+"""Reusable GLM text client for the official Z.AI Chat Completions API (OpenAI-shaped).
+
+Base URL defaults to ``https://api.z.ai/api/paas/v4`` (see Z.AI ``POST /chat/completions``).
 
 This wraps the `openai` SDK and adds:
   - Lazy singleton so endpoints don't re-create clients per request.
-  - Optional web-search activation (GLM-5.1's built-in tool). We attempt to pass
-    `tools=[{"type": "web_search"}]` and, if the API rejects the shape, transparently
-    retry without tools. The caller's prompt is expected to already instruct the
-    model to search for today's data, so prompt-only is a safe fallback.
+  - Optional web search via Z.AI's ``web_search`` tool schema. If the API rejects
+    the tool payload, we retry without tools for the rest of the process lifetime.
   - Strict JSON-mode helper that parses the response and raises a clear error on
     malformed output.
 
@@ -25,7 +25,17 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-_WEB_SEARCH_TOOL: list[dict[str, Any]] = [{"type": "web_search"}]
+# Z.AI requires `web_search` + `WebSearchObject` with `search_engine` (see OpenAPI docs).
+_WEB_SEARCH_TOOL: list[dict[str, Any]] = [
+    {
+        "type": "web_search",
+        "web_search": {
+            "enable": True,
+            "search_engine": "search_pro_jina",
+            "search_result": True,
+        },
+    }
+]
 
 
 class GLMClientError(RuntimeError):
@@ -33,7 +43,7 @@ class GLMClientError(RuntimeError):
 
 
 class GLMNotConfiguredError(GLMClientError):
-    """Raised when ILMU_API_KEY is not set. Distinct from runtime/API errors."""
+    """Raised when no Z.A.I API key is configured. Distinct from runtime/API errors."""
 
 
 @dataclass(slots=True)
@@ -53,20 +63,21 @@ def _get_bundle() -> _ClientBundle:
     if _bundle is not None:
         return _bundle
 
-    if not settings.ILMU_API_KEY:
+    if not settings.zai_api_key_resolved:
         raise GLMNotConfiguredError(
-            "ILMU_API_KEY is not set. Add it to backend/.env to enable GLM calls."
+            "ZAI_API_KEY is not set. Add it to backend/.env to enable GLM calls "
+            "(legacy ILMU_API_KEY is still accepted if ZAI_API_KEY is empty)."
         )
 
     client = OpenAI(
-        api_key=settings.ILMU_API_KEY,
-        base_url=settings.ILMU_BASE_URL,
-        timeout=settings.ILMU_TIMEOUT_SECONDS,
+        api_key=settings.zai_api_key_resolved,
+        base_url=settings.ZAI_BASE_URL,
+        timeout=settings.ZAI_CHAT_TIMEOUT_SECONDS,
     )
     _bundle = _ClientBundle(
         client=client,
-        model=settings.ILMU_MODEL,
-        supports_web_search=settings.ILMU_WEB_SEARCH_ENABLED,
+        model=settings.ZAI_CHAT_MODEL,
+        supports_web_search=settings.ZAI_WEB_SEARCH_ENABLED,
     )
     return _bundle
 
@@ -99,7 +110,7 @@ def chat_json(
         The parsed JSON response as a dict.
 
     Raises:
-        GLMNotConfiguredError: if ILMU_API_KEY is missing.
+        GLMNotConfiguredError: if ZAI_API_KEY (and legacy ILMU_API_KEY) are missing.
         GLMClientError: for transport errors or unparsable output after retries.
     """
     bundle = _get_bundle()
@@ -121,7 +132,7 @@ def chat_json(
         except GLMClientError:
             raise
         except OpenAIError as exc:
-            raise GLMClientError(f"ilmu API error: {exc}") from exc
+            raise GLMClientError(f"Z.AI API error: {exc}") from exc
 
         last_raw_content = content
         parsed = _try_parse_json(content)

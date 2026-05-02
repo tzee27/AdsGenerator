@@ -201,15 +201,16 @@ def generate_image(
         Generated image URL (plus optional raw bytes if needed).
 
     Raises:
-        GLMImageNotConfiguredError: if ZAI_API_KEY is missing.
+        GLMImageNotConfiguredError: if no Z.A.I API key is configured.
         GLMImageClientError: if the API call or asset download fails.
     """
     if not prompt or not prompt.strip():
         raise GLMImageClientError("Image prompt is empty.")
 
-    if not settings.ZAI_API_KEY:
+    if not settings.zai_api_key_resolved:
         raise GLMImageNotConfiguredError(
-            "ZAI_API_KEY is not set. Add it to backend/.env to enable image generation."
+            "ZAI_API_KEY is not set. Add it to backend/.env to enable image generation "
+            "(legacy ILMU_API_KEY is accepted if ZAI_API_KEY is empty)."
         )
 
     size = size_for(platform, format_hint)
@@ -227,7 +228,7 @@ def generate_image(
         body = _post_generate(
             prompt=prompt,
             size=size,
-            api_key=settings.ZAI_API_KEY,
+            api_key=settings.zai_api_key_resolved,
             base_url=settings.ZAI_BASE_URL,
             model=settings.ZAI_IMAGE_MODEL,
             quality=settings.ZAI_IMAGE_QUALITY,

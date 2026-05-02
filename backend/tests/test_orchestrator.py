@@ -228,7 +228,7 @@ def test_phase_a_propagates_context_failure() -> None:
     def failing_glm(messages, **kwargs):
         for m in messages:
             if m.get("role") == "system" and "live web-search" in m.get("content", ""):
-                raise GLMClientError("ilmu transient 5xx")
+                raise GLMClientError("Z.AI transient 5xx")
         return glm(messages, **kwargs)
 
     try:
@@ -489,7 +489,7 @@ def test_strategies_endpoint_returns_502_when_part_fails(monkeypatch) -> None:
 
 def test_strategies_endpoint_returns_503_when_glm_key_missing(monkeypatch) -> None:
     def raise_unconfigured(messages, **kwargs):
-        raise GLMNotConfiguredError("ILMU_API_KEY is not set.")
+        raise GLMNotConfiguredError("ZAI_API_KEY is not set.")
 
     _patch_all_providers(monkeypatch, glm_fn=raise_unconfigured)
 

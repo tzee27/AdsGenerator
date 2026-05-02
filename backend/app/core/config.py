@@ -9,20 +9,19 @@ class Settings(BaseSettings):
     # Target market for live-context gathering (Part 2). Can be overridden per request.
     AREA: str = "Malaysia"
 
-    # ilmu console — OpenAI-compatible GLM-5.1 endpoint
-    ILMU_API_KEY: str = ""
-    ILMU_BASE_URL: str = "https://api.ilmu.ai/v1"
-    ILMU_MODEL: str = "ilmu-glm-5.1"
-    # Bumped to 180s because Part 2 (live-context) uses GLM-5.1's web_search tool,
-    # which routinely takes 60-90s and previously timed out at the old 60s default.
-    ILMU_TIMEOUT_SECONDS: float = 180.0
-    # Toggle GLM-5.1 built-in web search. We'll attempt `tools=[{"type": "web_search"}]`;
-    # if the API rejects it we silently fall back to a prompt-only directive.
-    ILMU_WEB_SEARCH_ENABLED: bool = True
-
-    # Z.AI GLM-Image (text → image, separate from the ilmu-routed GLM-5.1 text API)
+    # Z.AI — GLM chat completions (`POST .../paas/v4/chat/completions`) and GLM-Image
+    # share the same API base URL and typically the same API key.
     ZAI_API_KEY: str = ""
     ZAI_BASE_URL: str = "https://api.z.ai/api/paas/v4"
+    ZAI_CHAT_MODEL: str = "glm-5.1"
+    # Live-context web_search routinely takes 60–90s.
+    ZAI_CHAT_TIMEOUT_SECONDS: float = 180.0
+    ZAI_WEB_SEARCH_ENABLED: bool = True
+
+    # Deprecated: set ZAI_API_KEY instead. Still read if ZAI_API_KEY is empty (migration).
+    ILMU_API_KEY: str = ""
+
+    # Z.AI GLM-Image (text → image)
     ZAI_IMAGE_MODEL: str = "glm-image"
     ZAI_IMAGE_QUALITY: str = "hd"  # 'hd' (~20s) or 'standard' (~5-10s)
     ZAI_IMAGE_TIMEOUT_SECONDS: float = 90.0
@@ -37,6 +36,14 @@ class Settings(BaseSettings):
     @property
     def cors_origins(self) -> list[str]:
         return [o.strip() for o in self.CORS_ALLOW_ORIGINS.split(",") if o.strip()]
+
+    @property
+    def zai_api_key_resolved(self) -> str:
+        """Prefer ZAI_API_KEY; fall back to legacy ILMU_API_KEY during migration."""
+        z = (self.ZAI_API_KEY or "").strip()
+        if z:
+            return z
+        return (self.ILMU_API_KEY or "").strip()
 
     # Legacy / Firebase placeholders
     AI_PROVIDER: str = ""

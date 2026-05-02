@@ -234,7 +234,7 @@ def test_endpoint_happy_path(monkeypatch) -> None:
 
 def test_endpoint_returns_503_when_glm_key_missing(monkeypatch) -> None:
     def raise_glm(*args, **kwargs):
-        raise GLMNotConfiguredError("ILMU_API_KEY is not set.")
+        raise GLMNotConfiguredError("ZAI_API_KEY is not set.")
 
     monkeypatch.setattr(content_generator._glm, "chat_json", raise_glm, raising=True)
     monkeypatch.setattr(
