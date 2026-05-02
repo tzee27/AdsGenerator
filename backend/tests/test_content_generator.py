@@ -108,6 +108,14 @@ def test_generate_content_happy_path() -> None:
     assert captured_image_call["kwargs"]["platform"] == "TikTok"
     assert captured_image_call["kwargs"]["format_hint"] == "Short Video"
 
+    print(
+        "\n=== UT-07 — generate_content() — expected outcome verified ===\n"
+        f"  variants={len(result.content_variants)}, first_headline={result.content_variants[0].headline!r}\n"
+        f"  image url={result.image.url!r}, mime={result.image.mime_type!r}\n"
+        f"  enable_web_search={captured['kwargs'].get('enable_web_search')}\n"
+        "  image_fn received prompt prefix + platform/format_hint for aspect ratio\n"
+    )
+
 
 def test_generate_content_three_copy_variants_are_distinct() -> None:
     """Model returned three variants — each headline must differ (real multi-hook output)."""

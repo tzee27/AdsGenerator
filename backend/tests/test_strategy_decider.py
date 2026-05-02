@@ -203,6 +203,12 @@ def test_drops_duplicate_product_platform_pairs() -> None:
     assert len(pairs) == 3  # all distinct
     assert ("Artisan Sourdough Bread", "TikTok") in pairs
 
+    print(
+        "\n=== UT-06 — decide_strategy() — expected outcome verified ===\n"
+        "  Duplicate (product, platform) dropped; still 3 strategies with 3 distinct pairs.\n"
+        f"  pairs={sorted(pairs)!r}\n"
+    )
+
 
 def test_pads_when_model_returns_fewer_than_count() -> None:
     only_one = {

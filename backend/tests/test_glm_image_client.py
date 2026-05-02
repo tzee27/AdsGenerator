@@ -144,6 +144,10 @@ def test_generate_image_raises_when_key_missing(monkeypatch) -> None:
     _patch_settings(monkeypatch, api_key="")
     with pytest.raises(GLMImageNotConfiguredError):
         generate_image("prompt", platform="TikTok")
+    print(
+        "\n=== UT-08 — generate_image() — expected outcome verified ===\n"
+        "  With empty API key, generate_image() raises GLMImageNotConfiguredError\n"
+    )
 
 
 def test_generate_image_raises_when_response_missing_data(monkeypatch) -> None:

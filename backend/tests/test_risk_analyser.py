@@ -39,6 +39,12 @@ def test_high_risk_when_expiry_is_imminent() -> None:
     assert result.medium_risk[0].product == "Bread"
     assert result.medium_risk[0].risk_score == 45
 
+    print(
+        "\n=== UT-01 — analyse_csv() — expected outcome verified ===\n"
+        "  high_risk: 1 row — product='Old Yogurt', risk_score=82\n"
+        "  medium_risk: 1 row — product='Bread', risk_score=45\n"
+    )
+
 
 def test_low_risk_for_fresh_low_exposure_items() -> None:
     csv_content = _csv(
@@ -82,6 +88,11 @@ def test_missing_required_column_raises() -> None:
         analyse_csv(bad_csv, today=TODAY)
     except RiskAnalyserError as exc:
         assert "date_added" in str(exc)
+        print(
+            "\n=== UT-02 — analyse_csv() — expected outcome verified ===\n"
+            "  Raised RiskAnalyserError mentioning missing column 'date_added'\n"
+            f"  Message (excerpt): {exc}\n"
+        )
     else:
         raise AssertionError("Expected RiskAnalyserError for missing column.")
 

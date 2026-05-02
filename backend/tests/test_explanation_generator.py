@@ -114,6 +114,15 @@ def test_financial_projection_matches_example_with_unit_price() -> None:
     assert "4,200" in proj.summary_line
     assert "688%" in proj.summary_line
 
+    print(
+        "\n=== UT-05 — compute_financial_projection() — expected outcome verified ===\n"
+        f"  spend_rm={proj.spend_rm}, reach={proj.predicted_reach}, "
+        f"ctr={proj.click_through_rate}, clicks={proj.predicted_clicks}\n"
+        f"  cvr={proj.conversion_rate}, sales={proj.predicted_sales}, "
+        f"aov_rm={proj.average_order_value_rm}, revenue_rm={proj.predicted_revenue_rm}\n"
+        f"  roi_percent={proj.roi_percent}, summary_line={proj.summary_line!r}\n"
+    )
+
 
 def test_financial_projection_derives_aov_from_risk_product() -> None:
     """If product matches a risk row, we use exposure/units as AOV."""

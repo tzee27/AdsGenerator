@@ -68,6 +68,13 @@ def test_gather_context_happy_path() -> None:
     assert "Kuala Lumpur" in user_msg
     assert "Vitamin C Serum 30ml" in user_msg
 
+    print(
+        "\n=== UT-03 — gather_live_context() — expected outcome verified ===\n"
+        f"  area={result.area!r}, seasonal_opportunity matches JSON fixture\n"
+        f"  enable_web_search (GLM kwargs)={captured['kwargs'].get('enable_web_search')}\n"
+        "  user prompt contains date, area, and product name\n"
+    )
+
 
 def test_gather_context_handles_list_shaped_platform_insights() -> None:
     weird_response = {
@@ -96,6 +103,12 @@ def test_gather_context_handles_list_shaped_platform_insights() -> None:
         "tiktok": "CPM RM 8",
         "facebook": "CPM RM 5",
     }
+
+    print(
+        "\n=== UT-04 — gather_live_context() — expected outcome verified ===\n"
+        "  platform_insights list from LLM normalized to dict:\n"
+        f"  {result.context.platform_insights}\n"
+    )
 
 
 def test_gather_context_requires_products() -> None:
